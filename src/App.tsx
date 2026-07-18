@@ -1931,9 +1931,9 @@ const CSS = `
 .hero-top .wordmark{color:#fff; text-shadow:0 2px 14px rgba(0,0,0,.45);}
 
 /* ------------------------------- scrolling ------------------------------ */
-.content{flex:1 1 auto; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scroll-behavior:smooth;}
+.content{flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scroll-behavior:smooth;}
 .content::-webkit-scrollbar{width:0;}
-.screen-pad{padding:8px 16px 128px;}
+.screen-pad{padding:8px 16px calc(130px + env(safe-area-inset-bottom));}
 .page-title{font-size:22px; font-weight:800; letter-spacing:-.03em; margin-bottom:12px;}
 
 /* --------------------------------- home -------------------------------- */
@@ -2202,7 +2202,7 @@ const CSS = `
 .rev-remove{width:38px; height:38px; border-radius:50%; background:rgba(229,72,77,.14); color:#E5484D; display:flex; align-items:center; justify-content:center;}
 
 /* -------------------------------- bottom nav ----------------------------- */
-.nav{position:absolute; left:0; right:0; bottom:0; z-index:40; display:flex; align-items:center; padding:9px 8px calc(10px + env(safe-area-inset-bottom));
+.nav{flex:0 0 auto; display:flex; align-items:center; padding:9px 8px calc(10px + env(safe-area-inset-bottom));
   background:rgba(10,11,13,.88); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid rgba(38,42,49,.7);}
 .nav-btn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px 0; color:var(--muted); transition:color .2s, transform .3s var(--ease);}
 .nav-btn:active{transform:scale(.92);}
