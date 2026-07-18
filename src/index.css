@@ -16,3 +16,8 @@ body {
   background: #000;
   overscroll-behavior: none;
 }
+
+/* Add bottom padding for fixed nav */
+.page-scroll {
+  padding-bottom: 80px;
+}
