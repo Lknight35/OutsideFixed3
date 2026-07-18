@@ -240,35 +240,30 @@ function SocialBadge({ p, size = 26 }) {
 }
 
 /* home feed card — 2-up, photo style, meta inside the card */
-const FeedCard = React.memo(function FeedCard({ clipId, cat, thumb, ts, name, loc, now, onOpen, onOpenPlace, placeId }) {
+const FeedCard = React.memo(function FeedCard({ clipId, cat, thumb, ts, name, loc, now, onOpen }) {
   return (
-    <div className="fcard-container">
-      <button className="fcard press" onClick={() => onOpen(clipId)} aria-label={`${name} — ${timeAgo(ts, now)}`}>
-        <span className="fcard-media">
-          {thumb ? <img src={thumb} className="fcard-img" alt="" draggable={false} /> : <VibeGradient catId={cat} big />}
-          <span className="fcard-shade" />
-          <span className="fcard-top"><CatPill catId={cat} /><PlayRing /></span>
-        </span>
-      </button>
-      <div className="fcard-footer">
-        <button className="fcard-name-btn" onClick={() => onOpenPlace?.(placeId)} title="View place profile">{name}</button>
-        <span className="fcard-foot">
-          <span className="fcard-loc"><MapPin size={11} strokeWidth={2.2} /> {loc}</span>
-          <span className="fcard-ago">{timeAgo(ts, now)}</span>
-        </span>
-      </div>
-    </div>
+    <button className="fcard press" onClick={() => onOpen(clipId)} aria-label={`${name} — ${timeAgo(ts, now)}`}>
+      <span className="fcard-media">
+        {thumb ? <img src={thumb} className="fcard-img" alt="" draggable={false} /> : <VibeGradient catId={cat} big />}
+        <span className="fcard-shade" />
+        <span className="fcard-top"><CatPill catId={cat} /><PlayRing /></span>
+        <span className="fcard-name">{name}</span>
+      </span>
+      <span className="fcard-foot">
+        <span className="fcard-loc"><MapPin size={11} strokeWidth={2.2} /> {loc}</span>
+        <span className="fcard-ago">{timeAgo(ts, now)}</span>
+      </span>
+    </button>
   );
 });
 
-function FeedGrid({ clips, placeById, now, onOpen, onOpenPlace, empty }) {
+function FeedGrid({ clips, placeById, now, onOpen, empty }) {
   if (!clips.length) return empty || null;
   return (
     <div className="fgrid">
       {clips.map((cl) => (
         <FeedCard key={cl.id} clipId={cl.id} cat={cl.cat} thumb={cl.thumb} ts={cl.ts}
-          name={placeById[cl.placeId]?.name || "Somewhere"} loc={locLabel(placeById[cl.placeId])} now={now} onOpen={onOpen}
-          onOpenPlace={onOpenPlace} placeId={cl.placeId} />
+          name={placeById[cl.placeId]?.name || "Somewhere"} loc={locLabel(placeById[cl.placeId])} now={now} onOpen={onOpen} />
       ))}
     </div>
   );
@@ -2027,8 +2022,8 @@ const CSS = `
 .edit-note{font-size:11px; color:var(--muted); margin:0 2px 12px; font-weight:500;}
 
 /* home feed cards — 2-up, photo style */
-.fgrid{display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0;}
-.fcard{display:flex; flex-direction:column; border-radius:18px; overflow:hidden; background:#0E0F12; border:none; text-align:left; isolation:isolate; box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.fgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.fcard{display:flex; flex-direction:column; border-radius:14px; overflow:hidden; background:#0E0F12; border:1px solid rgba(255,255,255,.06); text-align:left; isolation:isolate;}
 .fcard-media{position:relative; width:100%; aspect-ratio:1.03; overflow:hidden; display:block;}
 .fcard-img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
 .fcard-media .vibe{position:absolute; inset:0;}
@@ -2038,9 +2033,6 @@ const CSS = `
 .fcard-foot{display:flex; flex-direction:column; gap:3px; padding:9px 12px 11px;}
 .fcard-loc{display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:500; color:#B9C1CB;}
 .fcard-ago{font-size:11px; font-weight:500; color:#7E8794;}
-.fcard-container{display:flex; flex-direction:column; width:100%;}
-.fcard-footer{display:flex; flex-direction:column; gap:3px; padding:9px 12px 11px;}
-.fcard-name-btn{background:none; border:none; padding:0; font-size:14px; font-weight:700; letter-spacing:-.01em; color:var(--text); text-align:left; cursor:pointer; font-family:inherit;}
 
 .catpill{display:inline-flex; align-items:center; gap:4px; padding:4px 8px 4px 7px; border-radius:999px;
   color:#fff; font-size:10.5px; font-weight:600; backdrop-filter:blur(10px) saturate(1.3); -webkit-backdrop-filter:blur(10px) saturate(1.3);
