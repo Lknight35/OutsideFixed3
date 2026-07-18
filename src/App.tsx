@@ -2002,7 +2002,7 @@ const CSS = `
 /* ------------------------------- scrolling ------------------------------ */
 .content{flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scroll-behavior:smooth;}
 .content::-webkit-scrollbar{width:0;}
-.screen-pad{padding:8px 16px calc(130px + env(safe-area-inset-bottom));}
+.screen-pad{padding:8px 16px calc(200px + env(safe-area-inset-bottom));}
 .page-title{font-size:22px; font-weight:800; letter-spacing:-.03em; margin-bottom:12px;}
 
 /* --------------------------------- home -------------------------------- */
