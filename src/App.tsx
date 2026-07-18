@@ -240,30 +240,35 @@ function SocialBadge({ p, size = 26 }) {
 }
 
 /* home feed card — 2-up, photo style, meta inside the card */
-const FeedCard = React.memo(function FeedCard({ clipId, cat, thumb, ts, name, loc, now, onOpen }) {
+const FeedCard = React.memo(function FeedCard({ clipId, cat, thumb, ts, name, loc, now, onOpen, onOpenPlace, placeId }) {
   return (
-    <button className="fcard press" onClick={() => onOpen(clipId)} aria-label={`${name} — ${timeAgo(ts, now)}`}>
-      <span className="fcard-media">
-        {thumb ? <img src={thumb} className="fcard-img" alt="" draggable={false} /> : <VibeGradient catId={cat} big />}
-        <span className="fcard-shade" />
-        <span className="fcard-top"><CatPill catId={cat} /><PlayRing /></span>
-        <span className="fcard-name">{name}</span>
-      </span>
-      <span className="fcard-foot">
-        <span className="fcard-loc"><MapPin size={11} strokeWidth={2.2} /> {loc}</span>
-        <span className="fcard-ago">{timeAgo(ts, now)}</span>
-      </span>
-    </button>
+    <div className="fcard-container">
+      <button className="fcard press" onClick={() => onOpen(clipId)} aria-label={`${name} — ${timeAgo(ts, now)}`}>
+        <span className="fcard-media">
+          {thumb ? <img src={thumb} className="fcard-img" alt="" draggable={false} /> : <VibeGradient catId={cat} big />}
+          <span className="fcard-shade" />
+          <span className="fcard-top"><CatPill catId={cat} /><PlayRing /></span>
+        </span>
+      </button>
+      <div className="fcard-footer">
+        <button className="fcard-name-btn" onClick={() => onOpenPlace?.(placeId)} title="View place profile">{name}</button>
+        <span className="fcard-foot">
+          <span className="fcard-loc"><MapPin size={11} strokeWidth={2.2} /> {loc}</span>
+          <span className="fcard-ago">{timeAgo(ts, now)}</span>
+        </span>
+      </div>
+    </div>
   );
 });
 
-function FeedGrid({ clips, placeById, now, onOpen, empty }) {
+function FeedGrid({ clips, placeById, now, onOpen, onOpenPlace, empty }) {
   if (!clips.length) return empty || null;
   return (
     <div className="fgrid">
       {clips.map((cl) => (
         <FeedCard key={cl.id} clipId={cl.id} cat={cl.cat} thumb={cl.thumb} ts={cl.ts}
-          name={placeById[cl.placeId]?.name || "Somewhere"} loc={locLabel(placeById[cl.placeId])} now={now} onOpen={onOpen} />
+          name={placeById[cl.placeId]?.name || "Somewhere"} loc={locLabel(placeById[cl.placeId])} now={now} onOpen={onOpen}
+          onOpenPlace={onOpenPlace} placeId={cl.placeId} />
       ))}
     </div>
   );
@@ -549,17 +554,17 @@ function smartSummary(p) {
   return a === b ? [a] : [a, b];
 }
 const QUERY_CATS = [
-  [/rooftop|bar|club|dj|hip.?hop|drink|night|countdown|champagne/, "nightlife"],
-  [/coffee|seating|pizza|taco|food|breakfast|brunch|dessert|eat|bbq|hot chocolate/, "food"],
-  [/basketball|court|game|hoop/, "basketball"],
-  [/sunset|sunrise|golden hour/, "sunsets"],
-  [/beach|surf|boardwalk/, "beaches"],
-  [/mall|shopping|store/, "malls"],
-  [/clothes|clothing|thrift|fashion|costume/, "clothing"],
-  [/hike|trail|walk|nature|pumpkin/, "hiking"],
-  [/casino|slots|poker/, "casinos"],
-  [/car meet|cars/, "carmeets"],
-  [/music|concert|live|festival|party|event|fireworks|haunted|market|lights/, "events"],
+  [/rooftop|bar|club|dj|hip.?hop|drink|night|countdown|champagne|nightclub|lounge|cocktail|bottle service|vibe|lit/, "nightlife"],
+  [/coffee|seating|pizza|taco|food|breakfast|brunch|dessert|eat|bbq|hot chocolate|cafe|restaurant|spot|bites|ramen|sushi/, "food"],
+  [/basketball|court|game|hoop|ballin|pickup|streetball|hoopers|courts/, "basketball"],
+  [/sunset|sunrise|golden hour|views|skyline|overlook|vista|viewpoint/, "sunsets"],
+  [/beach|surf|boardwalk|ocean|water|waves|swimming|sand/, "beaches"],
+  [/mall|shopping|store|retail|boutique|shop|brands|outlet/, "malls"],
+  [/clothes|clothing|thrift|fashion|costume|vintage|apparel|fits|drip/, "clothing"],
+  [/hike|trail|walk|nature|pumpkin|mountain|park|outdoors|canyon|peak/, "hiking"],
+  [/casino|slots|poker|gaming|blackjack/, "casinos"],
+  [/car meet|cars|automotive|show|gathering|meetup|parking/, "carmeets"],
+  [/music|concert|live|festival|party|event|fireworks|haunted|market|lights|show|performance|dj set|rave/, "events"],
 ];
 function parseSmartQuery(t) {
   const out = [];
@@ -593,8 +598,20 @@ function pickPlaceholder() {
 }
 function pickAutoCats(cat) {
   const h = new Date().getHours();
-  const out = h >= 17 || h < 5 ? ["sunsets", "events"] : ["events"];
+  const out = [];
+
+  // Time-based suggestions
+  if (h >= 17 || h < 5) out.push("nightlife");
+  if (h >= 16 && h <= 20) out.push("sunsets");
+  if (h >= 20) out.push("events");
+
+  // Category-based suggestions
   if (cat === "basketball" || cat === "beaches") out.push("sunsets");
+  if (cat === "food") out.push("events");
+  if (cat === "malls" || cat === "clothing") out.push("shopping");
+  if (cat === "nightlife") out.push("events");
+  if (cat === "hiking" || cat === "beaches") out.push("nature");
+
   return [...new Set(out)].filter((x) => x !== cat).slice(0, 2);
 }
 
@@ -791,6 +808,23 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
           {saved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />} {saved ? "Saved to your places" : "Save this place"}
         </button>
 
+        <div className="nav-apps-row">
+          <button className="nav-app-btn" onClick={() => {
+            const query = encodeURIComponent(`${place.name} ${place.city}`);
+            window.open(`https://maps.google.com/maps/search/${query}`, '_blank');
+          }} title="Open in Google Maps"><Globe size={16} /> Maps</button>
+          <button className="nav-app-btn" onClick={() => {
+            const query = encodeURIComponent(`${place.name} ${place.city}`);
+            window.open(`https://waze.com/ul?q=${query}`, '_blank');
+          }} title="Open in Waze"><ChevronRight size={16} /> Waze</button>
+          <button className="nav-app-btn" onClick={() => {
+            const query = encodeURIComponent(`${place.name} ${place.city}`);
+            const mapsUrl = `maps://maps.apple.com/?q=${query}`;
+            window.location.href = mapsUrl;
+            setTimeout(() => { window.open(`https://maps.apple.com/?q=${query}`, '_blank'); }, 500);
+          }} title="Open in Apple Maps"><MapPin size={16} /> Apple Maps</button>
+        </div>
+
         {premium && (
           <div className="smart-line">
             {smartSummary(place).map((s) => <span key={s} className="smart-chip">{s}</span>)}
@@ -912,6 +946,12 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
   const around = [idx - 1, idx, idx + 1].filter((i) => i >= 0 && i < live.length);
   const fade = leaving === "back" ? 0.15 : leaving === "place" ? 0.35 : 1 - Math.min(Math.abs(drag.x) / 1100, 0.25);
   const reasons = ["Inappropriate", "Not this place", "Spam", "Violence or danger", "Other"];
+  const isSaved = localStorage.getItem(`saved-clip-${cur.id}`);
+  const toggleSaveClip = () => {
+    if (isSaved) { localStorage.removeItem(`saved-clip-${cur.id}`); }
+    else { localStorage.setItem(`saved-clip-${cur.id}`, JSON.stringify(cur)); }
+    if (navigator.vibrate) navigator.vibrate(12);
+  };
 
   return (
     <div className="viewer no-swipe" onClickCapture={clickCapture}
@@ -960,6 +1000,9 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
       <div className="v-chrome">
         <span className="v-counter mono">{idx + 1} / {live.length}</span>
         <div className="v-chrome-right">
+          <button className={"icon-btn glass" + (isSaved ? " saved" : "")} onClick={toggleSaveClip} aria-label={isSaved ? "Saved" : "Save clip"}>
+            {isSaved ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}
+          </button>
           <button className="icon-btn glass" onClick={() => setReporting(true)} aria-label="Report"><Flag size={17} /></button>
           <button className="icon-btn glass" onClick={onBack} aria-label="Close"><X size={19} /></button>
         </div>
@@ -997,9 +1040,11 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   const [thumbTime, setThumbTime] = useState(0);
   const [result, setResult] = useState(null);
   const [shares, setShares] = useState({});
+  const [savedClips, setSavedClips] = useState([]);
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
   const camRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunksRef = useRef([]);
-  const timerRef = useRef(null), thumbVideoRef = useRef(null), canvasRef = useRef(null);
+  const timerRef = useRef(null), thumbVideoRef = useRef(null), canvasRef = useRef(null), videoPreviewRef = useRef(null);
   const MAX_S = 15;
   const linkedKeys = PLATFORMS.filter((p) => linkedSocials[p.key]);
 
@@ -1124,29 +1169,52 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
         <div className="rec-post">
           <div className="rec-post-head">
             <button className="icon-btn" onClick={() => { setMedia(null); setStage("capture"); }}><ArrowLeft size={20} /></button>
-            <h3>New clip</h3>
+            <h3>Review & Share</h3>
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
           <div className="rec-post-body">
-            <div className="thumb-block">
-              <div className="thumb-preview">
-                {media && thumb ? <img src={thumb} alt="thumbnail" /> : <VibeGradient catId={cat || "events"} animated />}
-                {media && <video ref={thumbVideoRef} src={media} muted playsInline preload="metadata" style={{ display: "none" }} />}
-                <canvas ref={canvasRef} style={{ display: "none" }} />
+            <div className="video-preview-block">
+              <div className="video-preview">
+                {media ? (
+                  <>
+                    <video ref={videoPreviewRef} src={media} playsInline preload="metadata" className="preview-video" />
+                    <button className="play-overlay-btn" onClick={() => {
+                      if (videoPreviewRef.current) {
+                        if (videoPlaying) { videoPreviewRef.current.pause(); }
+                        else { videoPreviewRef.current.play(); }
+                        setVideoPlaying(!videoPlaying);
+                      }
+                    }}>
+                      {!videoPlaying && <Play size={28} fill="#fff" />}
+                    </button>
+                  </>
+                ) : (
+                  <VibeGradient catId={cat || "events"} animated />
+                )}
+                <span className="fcard-shade" />
               </div>
-              {media && duration > 0 ? (
+
+              {media && (
+                <div className="preview-controls">
+                  <div className="button-group">
+                    <button className="btn-ghost sm" onClick={() => setSavedClips([...savedClips, { id: Date.now(), media, loc, cat, thumb }])}><Heart size={15} /> Save for later</button>
+                    <button className="btn-ghost sm" onClick={() => { setMedia(null); setThumb(null); setStage("capture"); }}><RotateCcw size={15} /> Retake</button>
+                  </div>
+                </div>
+              )}
+
+              {media && duration > 0 && (
                 <div className="thumb-scrub no-swipe">
-                  <span className="thumb-label">slide to pick a thumbnail</span>
+                  <span className="thumb-label">pick thumbnail: {fmtDur(thumbTime)}</span>
                   <input type="range" min={0} max={duration} step={0.05} value={thumbTime}
                     onChange={(e) => { const t = parseFloat(e.target.value); setThumbTime(t); const v = thumbVideoRef.current; if (v) v.currentTime = t; }} />
+                  {media && <video ref={thumbVideoRef} src={media} muted playsInline preload="metadata" style={{ display: "none" }} />}
+                  <canvas ref={canvasRef} style={{ display: "none" }} />
                 </div>
-              ) : media ? (
-                <button className="btn-ghost sm" onClick={drawThumb}>Use current frame</button>
-              ) : null}
-              <button className="btn-ghost sm" onClick={() => { setMedia(null); setThumb(null); setStage("capture"); }}><RotateCcw size={15} /> Retake</button>
+              )}
             </div>
 
-            <h4 className="sec-label">Where is this?</h4>
+            <h4 className="sec-label">📍 Where is this?</h4>
             {loc ? (
               <div className="chosen-place">
                 <span className="place-row-thumb"><VibeGradient catId={cat || "events"} /></span>
@@ -1160,22 +1228,22 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
               <LocationSearch placeholder="Search a place or landmark…" onPick={(p) => { setLoc(p); if (p.placeId && placeById[p.placeId]) setCat((x) => x || placeById[p.placeId].cat); }} />
             )}
 
-            <h4 className="sec-label">What's the vibe?</h4>
+            <h4 className="sec-label">✨ What's the vibe?</h4>
             <div className="cat-pick">
               {CATEGORIES.map((c) => (
-                <button key={c.id} className={"chip" + (cat === c.id ? " chip-on" : "")} onClick={() => setCat(c.id)}>
+                <button key={c.id} className={"chip" + (cat === c.id ? " chip-on" : "")} onClick={() => { setCat(c.id); if (navigator.vibrate) navigator.vibrate(10); }}>
                   <CatIcon id={c.id} size={13} strokeWidth={2.3} /> {c.label}
                 </button>
               ))}
             </div>
 
-            <h4 className="sec-label">Also share to</h4>
+            <h4 className="sec-label">📱 Also share to</h4>
             {linkedKeys.length === 0 ? (
-              <p className="muted-line">No accounts linked. Link Instagram, TikTok and more in <b>Saved</b> to auto-share when you post.</p>
+              <p className="muted-line">No accounts linked. You can optionally link Instagram, TikTok, Snapchat, Facebook, or X in your Saved section to auto-share clips.</p>
             ) : (
               <div className="share-row">
                 {linkedKeys.map((p) => (
-                  <button key={p.key} className={"share-toggle" + (shares[p.key] ? " on" : "")} onClick={() => setShares((s) => ({ ...s, [p.key]: !s[p.key] }))}>
+                  <button key={p.key} className={"share-toggle" + (shares[p.key] ? " on" : "")} onClick={() => { setShares((s) => ({ ...s, [p.key]: !s[p.key] })); if (navigator.vibrate) navigator.vibrate(8); }}>
                     <SocialBadge p={p} size={22} /> {p.label}
                     {shares[p.key] && <Check size={14} className="share-check" />}
                   </button>
@@ -1184,7 +1252,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             )}
           </div>
           <div className="rec-post-bar">
-            <button className="btn-amber wide press" disabled={!canPost} onClick={submit}>{canPost ? "Post" : "Add a place and a vibe"}</button>
+            <button className="btn-amber wide press" disabled={!canPost} onClick={submit}>{canPost ? "Post clip" : "Add a place and vibe"}</button>
           </div>
         </div>
       )}
