@@ -2038,6 +2038,9 @@ const CSS = `
 .fcard-foot{display:flex; flex-direction:column; gap:3px; padding:9px 12px 11px;}
 .fcard-loc{display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:500; color:#B9C1CB;}
 .fcard-ago{font-size:11px; font-weight:500; color:#7E8794;}
+.fcard-container{display:flex; flex-direction:column; width:100%;}
+.fcard-footer{display:flex; flex-direction:column; gap:3px; padding:9px 12px 11px;}
+.fcard-name-btn{background:none; border:none; padding:0; font-size:14px; font-weight:700; letter-spacing:-.01em; color:var(--text); text-align:left; cursor:pointer; font-family:inherit;}
 
 .catpill{display:inline-flex; align-items:center; gap:4px; padding:4px 8px 4px 7px; border-radius:999px;
   color:#fff; font-size:10.5px; font-weight:600; backdrop-filter:blur(10px) saturate(1.3); -webkit-backdrop-filter:blur(10px) saturate(1.3);
