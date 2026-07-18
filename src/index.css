@@ -15,21 +15,38 @@ body,
 body {
   background: #000;
   overscroll-behavior: none;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Add bottom spacing for fixed nav */
+#root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+/* Navigation bar */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: #000;
+  border-top: 1px solid #1a1a1a;
+  z-index: 100;
+}
+
+/* Screen content with padding for nav */
+.screen-pad,
 .page-scroll {
-  padding-bottom: 200px;
-}
-
-.screen-pad {
-  padding-bottom: 200px;
+  padding-bottom: 90px;
 }
 
 .fgrid {
-  padding-bottom: 200px;
-}
-
-.fgrid > :last-child {
-  margin-bottom: 120px !important;
+  padding-bottom: 100px;
 }
