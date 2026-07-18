@@ -17,15 +17,19 @@ body {
   overscroll-behavior: none;
 }
 
-/* Add bottom padding for fixed nav */
+/* Add bottom spacing for fixed nav */
 .page-scroll {
-  padding-bottom: 200px !important;
-}
-
-.fgrid {
-  padding-bottom: 200px !important;
+  padding-bottom: 200px;
 }
 
 .screen-pad {
-  padding-bottom: 200px !important;
+  padding-bottom: 200px;
+}
+
+.fgrid {
+  padding-bottom: 200px;
+}
+
+.fgrid > :last-child {
+  margin-bottom: 120px !important;
 }
