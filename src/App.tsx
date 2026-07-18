@@ -2027,8 +2027,8 @@ const CSS = `
 .edit-note{font-size:11px; color:var(--muted); margin:0 2px 12px; font-weight:500;}
 
 /* home feed cards — 2-up, photo style */
-.fgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-.fcard{display:flex; flex-direction:column; border-radius:14px; overflow:hidden; background:#0E0F12; border:1px solid rgba(255,255,255,.06); text-align:left; isolation:isolate;}
+.fgrid{display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0;}
+.fcard{display:flex; flex-direction:column; border-radius:18px; overflow:hidden; background:#0E0F12; border:none; text-align:left; isolation:isolate; box-shadow:0 8px 24px rgba(0,0,0,.4);}
 .fcard-media{position:relative; width:100%; aspect-ratio:1.03; overflow:hidden; display:block;}
 .fcard-img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
 .fcard-media .vibe{position:absolute; inset:0;}
