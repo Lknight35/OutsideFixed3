@@ -23,6 +23,161 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Feed grid layout - 2 columns on desktop, responsive */
+.fgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 16px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .fgrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fgrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+/* Card container wrapper */
+.fcard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Feed card button - the clickable element */
+.fcard {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.fcard.press {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Media container - holds image or gradient */
+.fcard-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* Card image styling */
+.fcard-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* Gradient overlay on card */
+.fcard-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0.8) 100%);
+  pointer-events: none;
+}
+
+/* Top overlay area - category pill and play button */
+.fcard-top {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Card footer - name and location info */
+.fcard-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Card name button */
+.fcard-name-btn {
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  transition: color 0.2s ease-out;
+}
+
+.fcard-name-btn:hover {
+  color: #aaa;
+}
+
+/* Card footer info section */
+.fcard-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.2;
+}
+
+/* Location text with icon */
+.fcard-loc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Time ago text */
+.fcard-ago {
+  flex-shrink: 0;
+  color: #666;
+  font-size: 11px;
+}
+
 /* Smooth scrolling for feed lists and grids */
 .page-scroll,
 .fgrid,
