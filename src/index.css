@@ -19,13 +19,13 @@ body {
 
 /* Add bottom padding for fixed nav */
 .page-scroll {
-  padding-bottom: 100px;
+  padding-bottom: 200px !important;
 }
 
 .fgrid {
-  padding-bottom: 120px;
+  padding-bottom: 200px !important;
 }
 
 .screen-pad {
-  padding-bottom: 100px;
+  padding-bottom: 200px !important;
 }
