@@ -2043,7 +2043,7 @@ const CSS = `
 .hero-meta{display:flex; align-items:center; gap:11px; flex-wrap:wrap;}
 .hero-count{font-size:12.5px; font-weight:500; color:#CBD1D9;}
 
-.page-scroll{flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;}
+.page-scroll{flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding-bottom:calc(128px + env(safe-area-inset-bottom));}
 .page-scroll::-webkit-scrollbar{width:0;}
 .place-body{padding:16px 16px 128px;}
 .btn-record-here{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; height:48px;
