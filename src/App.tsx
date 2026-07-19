@@ -1086,17 +1086,11 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
     let cancelled = false;
     async function go() {
       if (!open || stage !== "capture") return;
-      setCameraOk(null);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true });
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
-        if (camRef.current) {
-          camRef.current.srcObject = stream;
-          camRef.current.onloadedmetadata = () => {
-            camRef.current?.play().catch(() => {});
-          };
-        }
+        if (camRef.current) { camRef.current.srcObject = stream; camRef.current.play().catch(() => {}); }
         setCameraOk(true);
       } catch { setCameraOk(false); }
     }
