@@ -1138,15 +1138,21 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
         mr.onstop = () => {
           setRecording(false);
           const chunks = chunksRef.current.slice();
-          requestAnimationFrame(() => {
-            const blob = new Blob(chunks, { type: chunks[0]?.type || "video/webm" });
-            const url = URL.createObjectURL(blob);
-            setMedia(url);
-            setTimeout(() => {
+          setTimeout(() => {
+            try {
+              const blob = new Blob(chunks, { type: chunks[0]?.type || "video/webm" });
+              const url = URL.createObjectURL(blob);
+              setMedia(url);
+              setTimeout(() => {
+                setStage("post");
+                stopStream();
+              }, 200);
+            } catch (e) {
+              console.error("Blob creation failed", e);
               setStage("post");
               stopStream();
-            }, 100);
-          });
+            }
+          }, 50);
         };
         recRef.current = mr; mr.start();
       } catch {}
