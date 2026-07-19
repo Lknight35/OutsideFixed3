@@ -1930,6 +1930,7 @@ export default function App() {
   /* base-screen swipe-right → home (overlays handle their own) */
   const gStart = useRef(null);
   const phoneSuppress = useRef(false);
+  const contentRef = useRef(null);
   const overlayOpen = !!(placeId || catId || clipId || reviewOpen || recOpen || bellOpen);
   const onPhoneDown = (e) => {
     if (overlayOpen || (e.target.closest && e.target.closest(".no-swipe"))) { gStart.current = null; return; }
