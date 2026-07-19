@@ -1078,14 +1078,8 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   }, [open]); // eslint-disable-line
 
   const stopStream = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => {
-        t.stop();
-      });
-      streamRef.current = null;
-    }
+    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    if (camRef.current) { camRef.current.srcObject = null; }
   }, []);
 
   useEffect(() => {
@@ -1138,42 +1132,21 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
     if (cameraOk && streamRef.current && "MediaRecorder" in window) {
       try {
         chunksRef.current = [];
-        const mr = new MediaRecorder(streamRef.current, { mimeType: "video/webm" });
-        mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
+        const mr = new MediaRecorder(streamRef.current);
+        mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
         mr.onstop = () => {
-          setRecording(false);
-          setTimeout(() => {
-            const blob = new Blob(chunksRef.current, { type: "video/webm" });
-            if (blob.size > 0) {
-              const url = URL.createObjectURL(blob);
-              setMedia(url);
-            }
-            setStage("post");
-            stopStream();
-          }, 0);
+          const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "video/webm" });
+          setMedia(URL.createObjectURL(blob)); setStage("post"); stopStream();
         };
-        recRef.current = mr;
-        mr.start();
-      } catch (e) {
-        console.error("Recording error:", e);
-        setRecording(false);
-        setStage("post");
-        stopStream();
-      }
+        recRef.current = mr; mr.start();
+      } catch {}
     }
   }
   function stopRec() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    if (recRef.current) {
-      if (recRef.current.state === "recording") {
-        recRef.current.requestData();
-        recRef.current.stop();
-      }
-    } else {
-      setRecording(false);
-      setStage("post");
-      stopStream();
-    }
+    setRecording(false);
+    if (recRef.current && recRef.current.state !== "inactive") recRef.current.stop();
+    else { setMedia(null); setStage("post"); stopStream(); }
   }
   function close() { stopStream(); onClose(); }
 
