@@ -1078,8 +1078,14 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   }, [open]); // eslint-disable-line
 
   const stopStream = useCallback(() => {
-    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => {
+        t.stop();
+      });
+      streamRef.current = null;
+    }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (camRef.current) { camRef.current.srcObject = null; }
   }, []);
 
   useEffect(() => {
@@ -1135,14 +1141,16 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
         const mr = new MediaRecorder(streamRef.current, { mimeType: "video/webm" });
         mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
         mr.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: "video/webm" });
-          if (blob.size > 0) {
-            const url = URL.createObjectURL(blob);
-            setMedia(url);
-          }
-          setStage("post");
           setRecording(false);
-          stopStream();
+          setTimeout(() => {
+            const blob = new Blob(chunksRef.current, { type: "video/webm" });
+            if (blob.size > 0) {
+              const url = URL.createObjectURL(blob);
+              setMedia(url);
+            }
+            setStage("post");
+            stopStream();
+          }, 0);
         };
         recRef.current = mr;
         mr.start();
