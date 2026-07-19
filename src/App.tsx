@@ -1108,18 +1108,8 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   }, []);
 
   useEffect(() => {
-    if (stage !== "post" || !media) return;
-    const v = thumbVideoRef.current; if (!v) return;
-    const onMeta = () => {
-      if (isFinite(v.duration) && v.duration > 0) {
-        setDuration(v.duration);
-      }
-    };
-    const onSeeked = () => drawThumb();
-    v.addEventListener("loadedmetadata", onMeta);
-    v.addEventListener("seeked", onSeeked);
-    if (v.readyState >= 1) onMeta();
-    return () => { v.removeEventListener("loadedmetadata", onMeta); v.removeEventListener("seeked", onSeeked); };
+    // TEMP: Metadata effect disabled for testing
+    return;
   }, [stage, media, drawThumb]);
 
   function startRec() {
