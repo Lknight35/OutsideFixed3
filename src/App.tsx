@@ -1110,27 +1110,14 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   useEffect(() => {
     if (stage !== "post" || !media) return;
     const v = thumbVideoRef.current; if (!v) return;
-    let timeoutId;
     const onMeta = () => {
-      let d = v.duration;
-      if (isFinite(d) && d > 0) {
-        setDuration(d);
-        v.currentTime = Math.min(0.1, d * 0.5);
-        setThumbTime(v.currentTime);
+      if (isFinite(v.duration) && v.duration > 0) {
+        setDuration(v.duration);
       }
     };
-    const onSeeked = () => drawThumb();
     v.addEventListener("loadedmetadata", onMeta);
-    v.addEventListener("seeked", onSeeked);
-    if (v.readyState >= 1) {
-      timeoutId = setTimeout(onMeta, 100);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      v.removeEventListener("loadedmetadata", onMeta);
-      v.removeEventListener("seeked", onSeeked);
-    };
-  }, [stage, media, drawThumb]);
+    return () => { v.removeEventListener("loadedmetadata", onMeta); };
+  }, [stage, media]);
 
   function startRec() {
     setElapsed(0); setRecording(true);
@@ -1148,10 +1135,10 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             const blob = new Blob(chunks, { type: chunks[0]?.type || "video/webm" });
             const url = URL.createObjectURL(blob);
             setMedia(url);
-            requestAnimationFrame(() => {
+            setTimeout(() => {
               setStage("post");
               stopStream();
-            });
+            }, 100);
           });
         };
         recRef.current = mr; mr.start();
