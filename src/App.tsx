@@ -1110,19 +1110,26 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   useEffect(() => {
     if (stage !== "post" || !media) return;
     const v = thumbVideoRef.current; if (!v) return;
+    let timeoutId;
     const onMeta = () => {
       let d = v.duration;
-      if (d === Infinity || isNaN(d) || d <= 0) {
-        const onTU = () => { if (v.currentTime > 0) { v.removeEventListener("timeupdate", onTU); v.currentTime = 0; setDuration(isFinite(v.duration) ? v.duration : 0); } };
-        v.addEventListener("timeupdate", onTU); v.currentTime = 1e6;
-      } else setDuration(d);
-      v.currentTime = 0.1; setThumbTime(0.1);
+      if (isFinite(d) && d > 0) {
+        setDuration(d);
+        v.currentTime = Math.min(0.1, d * 0.5);
+        setThumbTime(v.currentTime);
+      }
     };
     const onSeeked = () => drawThumb();
     v.addEventListener("loadedmetadata", onMeta);
     v.addEventListener("seeked", onSeeked);
-    if (v.readyState >= 1) onMeta();
-    return () => { v.removeEventListener("loadedmetadata", onMeta); v.removeEventListener("seeked", onSeeked); };
+    if (v.readyState >= 1) {
+      timeoutId = setTimeout(onMeta, 100);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      v.removeEventListener("loadedmetadata", onMeta);
+      v.removeEventListener("seeked", onSeeked);
+    };
   }, [stage, media, drawThumb]);
 
   function startRec() {
