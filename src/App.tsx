@@ -1187,43 +1187,8 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
           <div className="rec-post-body">
-            <div className="video-preview-block">
-              <div className="video-preview">
-                {media ? (
-                  <>
-                    <video ref={videoPreviewRef} src={media} playsInline className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
-                    <button className="play-overlay-btn" onClick={() => {
-                      if (videoPreviewRef.current) {
-                        videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
-                      }
-                    }}>
-                      {!videoPlaying && <Play size={28} fill="#fff" />}
-                    </button>
-                  </>
-                ) : (
-                  <VibeGradient catId={cat || "events"} animated />
-                )}
-                <span className="fcard-shade" />
-              </div>
-
-              {media && (
-                <div className="preview-controls">
-                  <div className="button-group">
-                    <button className="btn-ghost sm" onClick={() => setSavedClips([...savedClips, { id: Date.now(), media, loc, cat, thumb }])}><Heart size={15} /> Save for later</button>
-                    <button className="btn-ghost sm" onClick={() => { setMedia(null); setThumb(null); setStage("capture"); }}><RotateCcw size={15} /> Retake</button>
-                  </div>
-                </div>
-              )}
-
-              {media && duration > 0 && (
-                <div className="thumb-scrub no-swipe">
-                  <span className="thumb-label">pick thumbnail: {fmtDur(thumbTime)}</span>
-                  <input type="range" min={0} max={duration} step={0.05} value={thumbTime}
-                    onChange={(e) => { const t = parseFloat(e.target.value); setThumbTime(t); const v = thumbVideoRef.current; if (v) v.currentTime = t; }} />
-                  {media && <video ref={thumbVideoRef} src={media} muted playsInline preload="metadata" style={{ display: "none" }} />}
-                  <canvas ref={canvasRef} style={{ display: "none" }} />
-                </div>
-              )}
+            <div style={{ padding: "20px", textAlign: "center", color: "#999" }}>
+              Video preview block disabled for testing
             </div>
 
             <h4 className="sec-label">📍 Where is this?</h4>
