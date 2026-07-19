@@ -1242,13 +1242,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             )}
 
             <h4 className="sec-label">✨ What's the vibe?</h4>
-            <div className="cat-pick">
-              {CATEGORIES.map((c) => (
-                <button key={c.id} className={"chip" + (cat === c.id ? " chip-on" : "")} onClick={() => { setCat(c.id); if (navigator.vibrate) navigator.vibrate(10); }}>
-                  <CatIcon id={c.id} size={13} strokeWidth={2.3} /> {c.label}
-                </button>
-              ))}
-            </div>
+            <div style={{ padding: "10px", color: "#999" }}>Category buttons disabled for testing</div>
 
             <h4 className="sec-label">📱 Also share to</h4>
             {linkedKeys.length === 0 ? (
