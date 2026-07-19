@@ -1063,11 +1063,17 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
     let cancelled = false;
     async function go() {
       if (!open || stage !== "capture") return;
+      setCameraOk(null);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true });
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
-        if (camRef.current) { camRef.current.srcObject = stream; camRef.current.play().catch(() => {}); }
+        if (camRef.current) {
+          camRef.current.srcObject = stream;
+          camRef.current.onloadedmetadata = () => {
+            camRef.current?.play().catch(() => {});
+          };
+        }
         setCameraOk(true);
       } catch { setCameraOk(false); }
     }
@@ -1144,11 +1150,10 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
         <div className="rec-capture">
           <div className="rec-view">
             {cameraOk
-              ? <video ref={camRef} muted playsInline className="rec-cam" />
+              ? <video ref={camRef} muted autoPlay playsInline className="rec-cam" />
               : <div className="rec-sim"><div className="vibe-sweep" /><div className="rec-sim-text">{cameraOk === false ? "camera unavailable in preview — you can still post a simulated clip" : "starting camera…"}</div></div>}
             <div className="rec-grid-lines" aria-hidden />
             <button className="icon-btn glass rec-x" onClick={close}><X size={20} /></button>
-            <div className="rec-toptag"><span className="rec-recdot" /> record only · no uploads</div>
             {recording && <div className="rec-timer mono"><span className="rec-recdot pulsing" /> {elapsed.toFixed(1)}s / {MAX_S}s</div>}
           </div>
           <div className="rec-controls">
@@ -1694,6 +1699,11 @@ export default function App() {
   const [strikes, setStrikes] = useState(0);
   const [blockedUntil, setBlockedUntil] = useState(0);
   const [banned, setBanned] = useState(false);
+  const [savedClips, setSavedClips] = useState([]);
+  const [showOnboardingTip, setShowOnboardingTip] = useState(true);
+  const [swipeStartX, setSwipeStartX] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const screenHistory = useRef(["home"]);
 
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(t); }, []);
   useEffect(() => {
@@ -1873,14 +1883,20 @@ export default function App() {
   const overlayOpen = !!(placeId || catId || clipId || reviewOpen || recOpen || bellOpen);
   const onPhoneDown = (e) => {
     if (overlayOpen || (e.target.closest && e.target.closest(".no-swipe"))) { gStart.current = null; return; }
-    gStart.current = { x: e.clientX, y: e.clientY, t: Date.now() };
+    const scrollTop = contentRef.current?.scrollTop || 0;
+    gStart.current = { x: e.clientX, y: e.clientY, t: Date.now(), scrollTop };
   };
   const onPhoneUp = (e) => {
     const s = gStart.current; gStart.current = null;
     if (!s || overlayOpen) return;
     const dX = e.clientX - s.x, dY = e.clientY - s.y, dt = Date.now() - s.t;
     if (Math.abs(dX) > 24 && Math.abs(dX) > Math.abs(dY)) phoneSuppress.current = true;
+
     if (dt < 600 && dX > 70 && Math.abs(dX) > Math.abs(dY) * 1.4 && screen !== "home") setScreen("home");
+    if (dt < 600 && dY > 60 && s.scrollTop === 0 && Math.abs(dY) > Math.abs(dX) * 1.4) {
+      setRefreshing(true);
+      setTimeout(() => setRefreshing(false), 600);
+    }
   };
   const onPhoneClickCapture = (e) => {
     if (phoneSuppress.current) { e.stopPropagation(); e.preventDefault(); phoneSuppress.current = false; }
@@ -1898,7 +1914,7 @@ export default function App() {
       <div className="phone" onPointerDown={onPhoneDown} onPointerUp={onPhoneUp} onClickCapture={onPhoneClickCapture}>
         <TopBar dotColor={FALLBACK} onSearch={openSearch} onBell={openBell} />
 
-        <main className="content">
+        <main className="content" ref={contentRef}>
           {screen === "home" && (
             <HomeScreen feed={feed} interestCats={interestCats} savedPlaces={savedPlaces} placeById={placeById} now={now}
               onOpenClip={openClip} filter={homeFilter} setFilter={setHomeFilter}
