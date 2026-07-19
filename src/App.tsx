@@ -1187,8 +1187,24 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
           <div className="rec-post-body">
-            <div style={{ padding: "20px", textAlign: "center", color: "#999" }}>
-              Video preview block disabled for testing
+            <div className="video-preview-block">
+              <div className="video-preview">
+                {media ? (
+                  <>
+                    <video ref={videoPreviewRef} src={media} playsInline className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
+                    <button className="play-overlay-btn" onClick={() => {
+                      if (videoPreviewRef.current) {
+                        videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
+                      }
+                    }}>
+                      {!videoPlaying && <Play size={28} fill="#fff" />}
+                    </button>
+                  </>
+                ) : (
+                  <VibeGradient catId={cat || "events"} animated />
+                )}
+                <span className="fcard-shade" />
+              </div>
             </div>
 
             <h4 className="sec-label">📍 Where is this?</h4>
