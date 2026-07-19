@@ -1186,11 +1186,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             <h3>Review & Share</h3>
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
-          {/* TEMP: Testing responsiveness */}
-          <div style={{ padding: "20px", textAlign: "center" }}>
-            <p>Video loaded. Form hidden for testing.</p>
-          </div>
-          <div className="rec-post-body" style={{ display: "none" }}>
+          <div className="rec-post-body">
             <div className="video-preview-block">
               <div className="video-preview">
                 {media ? (
@@ -1241,7 +1237,8 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
                 <button className="btn-change" onClick={() => setLoc(null)}>Change</button>
               </div>
             ) : (
-              <LocationSearch placeholder="Search a place or landmark…" onPick={(p) => { setLoc(p); if (p.placeId && placeById[p.placeId]) setCat((x) => x || placeById[p.placeId].cat); }} />
+              <div style={{ padding: "10px", color: "#999" }}>Location search disabled for testing</div>
+              // <LocationSearch placeholder="Search a place or landmark…" onPick={(p) => { setLoc(p); if (p.placeId && placeById[p.placeId]) setCat((x) => x || placeById[p.placeId].cat); }} />
             )}
 
             <h4 className="sec-label">✨ What's the vibe?</h4>
