@@ -1186,7 +1186,11 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             <h3>Review & Share</h3>
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
-          <div className="rec-post-body">
+          {/* TEMP: Testing responsiveness */}
+          <div style={{ padding: "20px", textAlign: "center" }}>
+            <p>Video loaded. Form hidden for testing.</p>
+          </div>
+          <div className="rec-post-body" style={{ display: "none" }}>
             <div className="video-preview-block">
               <div className="video-preview">
                 {media ? (
