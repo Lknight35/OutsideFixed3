@@ -1133,24 +1133,33 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
       try {
         chunksRef.current = [];
         const mr = new MediaRecorder(streamRef.current);
-        mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
+        mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
         mr.onstop = () => {
-          if (chunksRef.current.length > 0) {
-            const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "video/webm" });
-            setMedia(URL.createObjectURL(blob));
-          }
+          setRecording(false);
+          const blob = new Blob(chunksRef.current, { type: "video/webm" });
+          if (blob.size > 0) setMedia(URL.createObjectURL(blob));
           setStage("post");
           stopStream();
         };
-        recRef.current = mr; mr.start();
-      } catch { setStage("post"); stopStream(); }
+        recRef.current = mr;
+        mr.start();
+      } catch (e) {
+        console.error("Recording error:", e);
+        setRecording(false);
+        setStage("post");
+        stopStream();
+      }
     }
   }
   function stopRec() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    setRecording(false);
-    if (recRef.current && recRef.current.state === "recording") recRef.current.stop();
-    else { setStage("post"); stopStream(); }
+    if (recRef.current && recRef.current.state === "recording") {
+      recRef.current.stop();
+    } else {
+      setRecording(false);
+      setStage("post");
+      stopStream();
+    }
   }
   function close() { stopStream(); onClose(); }
 
@@ -1198,12 +1207,10 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
               <div className="video-preview">
                 {media ? (
                   <>
-                    <video ref={videoPreviewRef} src={media} playsInline preload="metadata" className="preview-video" />
+                    <video ref={videoPreviewRef} src={media} playsInline className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
                     <button className="play-overlay-btn" onClick={() => {
                       if (videoPreviewRef.current) {
-                        if (videoPlaying) { videoPreviewRef.current.pause(); }
-                        else { videoPreviewRef.current.play(); }
-                        setVideoPlaying(!videoPlaying);
+                        videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
                       }
                     }}>
                       {!videoPlaying && <Play size={28} fill="#fff" />}
