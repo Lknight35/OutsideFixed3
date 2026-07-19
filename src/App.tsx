@@ -1110,21 +1110,20 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   useEffect(() => {
     if (stage !== "post" || !media) return;
     const v = thumbVideoRef.current; if (!v) return;
-    let timeoutId;
     const onMeta = () => {
-      if (isFinite(v.duration) && v.duration > 0) {
-        setDuration(v.duration);
-      }
+      let d = v.duration;
+      if (d === Infinity || isNaN(d) || d <= 0) {
+        const onTU = () => { if (v.currentTime > 0) { v.removeEventListener("timeupdate", onTU); v.currentTime = 0; setDuration(isFinite(v.duration) ? v.duration : 0); } };
+        v.addEventListener("timeupdate", onTU); v.currentTime = 1e6;
+      } else setDuration(d);
+      v.currentTime = 0.1; setThumbTime(0.1);
     };
+    const onSeeked = () => drawThumb();
     v.addEventListener("loadedmetadata", onMeta);
-    if (v.readyState >= 1) {
-      timeoutId = setTimeout(() => onMeta(), 50);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      v.removeEventListener("loadedmetadata", onMeta);
-    };
-  }, [stage, media]);
+    v.addEventListener("seeked", onSeeked);
+    if (v.readyState >= 1) onMeta();
+    return () => { v.removeEventListener("loadedmetadata", onMeta); v.removeEventListener("seeked", onSeeked); };
+  }, [stage, media, drawThumb]);
 
   function startRec() {
     setElapsed(0); setRecording(true);
@@ -1195,7 +1194,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
               <div className="video-preview">
                 {media ? (
                   <>
-                    <video ref={videoPreviewRef} src={media} muted playsInline preload="none" className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
+                    <video ref={videoPreviewRef} src={media} playsInline className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
                     <button className="play-overlay-btn" onClick={() => {
                       if (videoPreviewRef.current) {
                         videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
@@ -1224,7 +1223,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
                   <span className="thumb-label">pick thumbnail: {fmtDur(thumbTime)}</span>
                   <input type="range" min={0} max={duration} step={0.05} value={thumbTime}
                     onChange={(e) => { const t = parseFloat(e.target.value); setThumbTime(t); const v = thumbVideoRef.current; if (v) v.currentTime = t; }} />
-                  {media && <video ref={thumbVideoRef} src={media} muted playsInline preload="none" style={{ display: "none" }} />}
+                  {media && <video ref={thumbVideoRef} src={media} muted playsInline preload="metadata" style={{ display: "none" }} />}
                   <canvas ref={canvasRef} style={{ display: "none" }} />
                 </div>
               )}
