@@ -857,7 +857,7 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
 /* ------------------------------ clip viewer ----------------------------- */
 /* Full-screen pager. Finger-tracked: drag up/down pages between clips,
    drag right exits back, drag left opens the clip's place. Tap = pause. */
-function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPlace, onReport }) {
+function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPlace, onReport, savedClips, setSavedClips }) {
   const live = useMemo(() => ids.map((id) => clipsById[id]).filter((c) => c && c.status === "live"), [ids, clipsById]);
   const [idx, setIdx] = useState(() => { const i = live.findIndex((c) => c.id === startId); return i < 0 ? 0 : i; });
   const [drag, setDrag] = useState({ x: 0, y: 0, anim: true });
@@ -941,10 +941,13 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
   const around = [idx - 1, idx, idx + 1].filter((i) => i >= 0 && i < live.length);
   const fade = leaving === "back" ? 0.15 : leaving === "place" ? 0.35 : 1 - Math.min(Math.abs(drag.x) / 1100, 0.25);
   const reasons = ["Inappropriate", "Not this place", "Spam", "Violence or danger", "Other"];
-  const isSaved = localStorage.getItem(`saved-clip-${cur.id}`);
+  const isSaved = savedClips.some((sc) => sc.id === cur.id);
   const toggleSaveClip = () => {
-    if (isSaved) { localStorage.removeItem(`saved-clip-${cur.id}`); }
-    else { localStorage.setItem(`saved-clip-${cur.id}`, JSON.stringify(cur)); }
+    if (isSaved) {
+      setSavedClips((sc) => sc.filter((s) => s.id !== cur.id));
+    } else {
+      setSavedClips((sc) => [...sc, { ...cur, savedAt: Date.now() }]);
+    }
     if (navigator.vibrate) navigator.vibrate(12);
   };
 
@@ -995,8 +998,8 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
       <div className="v-chrome">
         <span className="v-counter mono">{idx + 1} / {live.length}</span>
         <div className="v-chrome-right">
-          <button className={"icon-btn glass" + (isSaved ? " saved" : "")} onClick={toggleSaveClip} aria-label={isSaved ? "Saved" : "Save clip"}>
-            {isSaved ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}
+          <button className={"icon-btn glass" + (isSaved ? " liked" : "")} onClick={toggleSaveClip} aria-label={isSaved ? "Saved" : "Save clip"}>
+            <Heart size={17} fill={isSaved ? "#EC4899" : "none"} color={isSaved ? "#EC4899" : "currentColor"} />
           </button>
           <button className="icon-btn glass" onClick={() => setReporting(true)} aria-label="Report"><Flag size={17} /></button>
           <button className="icon-btn glass" onClick={onBack} aria-label="Close"><X size={19} /></button>
@@ -1310,7 +1313,7 @@ function ScopeEditor({ interest, placeById, onSet, onClose }) {
 }
 
 function SavedScreen({ interests, savedPlaces, placeById, toggleCat, setScope, togglePlace, addPlaceFromPick, onOpenPlace, socials, toggleSocial, reviewCount, onOpenReview, onReset,
-  savedSearches, onRunSaved, onRemoveSaved, myUpdates, myFilters, setMyFilters, onSaveFilter, onDownload, onShare, onDelete, onOpenClip, now }) {
+  savedSearches, onRunSaved, onRemoveSaved, myUpdates, myFilters, setMyFilters, onSaveFilter, onDownload, onShare, onDelete, onOpenClip, now, savedClips, setSavedClips }) {
   const [editing, setEditing] = useState(null);
   const [showAll, setShowAll] = useState(false);
   const activeCats = new Set(interests.map((i) => i.category));
@@ -1335,6 +1338,33 @@ function SavedScreen({ interests, savedPlaces, placeById, toggleCat, setScope, t
     <div className="screen-pad">
       <h2 className="page-title">Saved</h2>
       <p className="muted-line" style={{ marginTop: -4 }}>Your searches, your clips, your feed.</p>
+
+      <h4 className="sec-label">💜 Favorites</h4>
+      {savedClips.length === 0 ? (
+        <p className="muted-line">Heart videos you want to compare or review later.</p>
+      ) : (
+        <div className="fgrid">
+          {savedClips.map((c) => {
+            const p = placeById[c.placeId];
+            return (
+              <div key={c.id} className="fcard-container">
+                <button className="fcard press" onClick={() => onOpenClip(c.id, [c.id])} aria-label={`${c.name}`}>
+                  <span className="fcard-media">
+                    {c.thumb ? <img src={c.thumb} className="fcard-img" alt="" draggable={false} /> : <VibeGradient catId={c.cat} big />}
+                    <span className="fcard-shade" />
+                  </span>
+                </button>
+                <div style={{ padding: "9px 12px", display: "flex", flexDirection: "column", gap: "3px" }}>
+                  <button className="fcard-name-btn" style={{color: "var(--text)", textAlign: "left"}}>{p?.name || "Somewhere"}</button>
+                  <button className="icon-btn glass" onClick={() => setSavedClips((sc) => sc.filter((s) => s.id !== c.id))} aria-label="Remove from favorites" style={{width: "fit-content", fontSize: "11px", color: "var(--muted)"}}>
+                    <Heart size={12} fill="#EC4899" color="#EC4899" /> Remove
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <h4 className="sec-label">❤️ Saved searches</h4>
       {savedSearches.length === 0 ? (
@@ -1933,7 +1963,8 @@ export default function App() {
               reviewCount={reviewCount} onOpenReview={() => setReviewOpen(true)} onReset={resetDemo}
               savedSearches={savedSearches} onRunSaved={runSavedSearch} onRemoveSaved={removeSavedSearch}
               myUpdates={myUpdates} myFilters={myFilters} setMyFilters={setMyFilters} onSaveFilter={saveFilterSearch}
-              onDownload={downloadClip} onShare={shareClip} onDelete={deleteMine} onOpenClip={openClip} now={now} />
+              onDownload={downloadClip} onShare={shareClip} onDelete={deleteMine} onOpenClip={openClip} now={now}
+              savedClips={savedClips} setSavedClips={setSavedClips} />
           )}
           {screen === "unlock" && (
             <UnlockScreen qBank={qBank} premiumActive={premiumActive} premiumUntil={premiumUntil} now={now} onSimulate={approveQuality} />
@@ -1953,7 +1984,8 @@ export default function App() {
         )}
         {clipId && (
           <ClipViewer clipsById={clipsById} placeById={placeById} ids={viewerIds} startId={clipId} now={now}
-            onBack={() => setClipId(null)} onOpenPlace={openPlace} onReport={reportClip} />
+            onBack={() => setClipId(null)} onOpenPlace={openPlace} onReport={reportClip}
+            savedClips={savedClips} setSavedClips={setSavedClips} />
         )}
 
         <RecordModal open={recOpen} onClose={() => setRecOpen(false)} presetPlaceId={recPreset} placeById={placeById}
