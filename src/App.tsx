@@ -1060,7 +1060,6 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   const [shares, setShares] = useState({});
   const [savedClips, setSavedClips] = useState([]);
   const [videoPlaying, setVideoPlaying] = useState(false);
-  const [ready, setReady] = useState(false);
 
   const camRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunksRef = useRef([]);
   const timerRef = useRef(null), thumbVideoRef = useRef(null), canvasRef = useRef(null), videoPreviewRef = useRef(null);
@@ -1109,17 +1108,22 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   }, []);
 
   useEffect(() => {
-    if (stage !== "post" || !media) { setReady(false); return; }
+    if (stage !== "post" || !media) return;
     const v = thumbVideoRef.current; if (!v) return;
-    setReady(false);
+    let timeoutId;
     const onMeta = () => {
       if (isFinite(v.duration) && v.duration > 0) {
         setDuration(v.duration);
-        setTimeout(() => setReady(true), 50);
       }
     };
     v.addEventListener("loadedmetadata", onMeta);
-    return () => { v.removeEventListener("loadedmetadata", onMeta); };
+    if (v.readyState >= 1) {
+      timeoutId = setTimeout(() => onMeta(), 50);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      v.removeEventListener("loadedmetadata", onMeta);
+    };
   }, [stage, media]);
 
   function startRec() {
@@ -1234,50 +1238,45 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
               )}
             </div>
 
-            {!ready && <div style={{ minHeight: "300px", display: "flex", alignItems: "center", justifyContent: "center" }}><div className="vibe-sweep" /></div>}
-            {ready && (
-              <>
-                <h4 className="sec-label">📍 Where is this?</h4>
-                {loc ? (
-                  <div className="chosen-place">
-                    <span className="place-row-thumb"><VibeGradient catId={cat || "events"} /></span>
-                    <span className="place-row-text">
-                      <span className="place-row-name">{loc.name}</span>
-                      <span className="place-row-sub">{[loc.city, loc.state, loc.country].filter(Boolean).join(", ") || "Location set"}</span>
-                    </span>
-                    <button className="btn-change" onClick={() => setLoc(null)}>Change</button>
-                  </div>
-                ) : (
-                  <LocationSearch placeholder="Search a place or landmark…" onPick={(p) => { setLoc(p); if (p.placeId && placeById[p.placeId]) setCat((x) => x || placeById[p.placeId].cat); }} />
-                )}
+            <h4 className="sec-label">📍 Where is this?</h4>
+            {loc ? (
+              <div className="chosen-place">
+                <span className="place-row-thumb"><VibeGradient catId={cat || "events"} /></span>
+                <span className="place-row-text">
+                  <span className="place-row-name">{loc.name}</span>
+                  <span className="place-row-sub">{[loc.city, loc.state, loc.country].filter(Boolean).join(", ") || "Location set"}</span>
+                </span>
+                <button className="btn-change" onClick={() => setLoc(null)}>Change</button>
+              </div>
+            ) : (
+              <LocationSearch placeholder="Search a place or landmark…" onPick={(p) => { setLoc(p); if (p.placeId && placeById[p.placeId]) setCat((x) => x || placeById[p.placeId].cat); }} />
+            )}
 
-                <h4 className="sec-label">✨ What's the vibe?</h4>
-                <div className="cat-pick">
-                  {CATEGORIES.map((c) => (
-                    <button key={c.id} className={"chip" + (cat === c.id ? " chip-on" : "")} onClick={() => { setCat(c.id); if (navigator.vibrate) navigator.vibrate(10); }}>
-                      <CatIcon id={c.id} size={13} strokeWidth={2.3} /> {c.label}
-                    </button>
-                  ))}
-                </div>
+            <h4 className="sec-label">✨ What's the vibe?</h4>
+            <div className="cat-pick">
+              {CATEGORIES.map((c) => (
+                <button key={c.id} className={"chip" + (cat === c.id ? " chip-on" : "")} onClick={() => { setCat(c.id); if (navigator.vibrate) navigator.vibrate(10); }}>
+                  <CatIcon id={c.id} size={13} strokeWidth={2.3} /> {c.label}
+                </button>
+              ))}
+            </div>
 
-                <h4 className="sec-label">📱 Also share to</h4>
-                {linkedKeys.length === 0 ? (
-                  <p className="muted-line">No accounts linked. You can optionally link Instagram, TikTok, Snapchat, Facebook, or X in your Saved section to auto-share clips.</p>
-                ) : (
-                  <div className="share-row">
-                    {linkedKeys.map((p) => (
-                      <button key={p.key} className={"share-toggle" + (shares[p.key] ? " on" : "")} onClick={() => { setShares((s) => ({ ...s, [p.key]: !s[p.key] })); if (navigator.vibrate) navigator.vibrate(8); }}>
-                        <SocialBadge p={p} size={22} /> {p.label}
-                        {shares[p.key] && <Check size={14} className="share-check" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
+            <h4 className="sec-label">📱 Also share to</h4>
+            {linkedKeys.length === 0 ? (
+              <p className="muted-line">No accounts linked. You can optionally link Instagram, TikTok, Snapchat, Facebook, or X in your Saved section to auto-share clips.</p>
+            ) : (
+              <div className="share-row">
+                {linkedKeys.map((p) => (
+                  <button key={p.key} className={"share-toggle" + (shares[p.key] ? " on" : "")} onClick={() => { setShares((s) => ({ ...s, [p.key]: !s[p.key] })); if (navigator.vibrate) navigator.vibrate(8); }}>
+                    <SocialBadge p={p} size={22} /> {p.label}
+                    {shares[p.key] && <Check size={14} className="share-check" />}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
           <div className="rec-post-bar">
-            <button className="btn-amber wide press" disabled={!ready || !canPost} onClick={submit}>{!ready ? "Loading…" : canPost ? "Post clip" : "Add a place and vibe"}</button>
+            <button className="btn-amber wide press" disabled={!canPost} onClick={submit}>{canPost ? "Post clip" : "Add a place and vibe"}</button>
           </div>
         </div>
       )}
