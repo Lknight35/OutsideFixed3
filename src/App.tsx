@@ -1024,6 +1024,26 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
   );
 }
 
+/* ----------------------------- onboarding ----------------------------- */
+function OnboardingTip({ onDismiss }) {
+  useEffect(() => { const t = setTimeout(onDismiss, 4000); return () => clearTimeout(t); }, [onDismiss]);
+  return (
+    <div className="onboarding-overlay" onClick={onDismiss}>
+      <div className="onboarding-card">
+        <div className="onboarding-content">
+          <div className="onboarding-emoji">👋</div>
+          <h3>Welcome to Outside</h3>
+          <p>Swipe up/down to browse videos</p>
+          <p>Swipe left to see place details</p>
+          <p>Swipe right to go back</p>
+          <p>Pull down to refresh</p>
+        </div>
+        <button className="btn-ghost sm" onClick={onDismiss}>Got it</button>
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------ record flow ---------------------------- */
 function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInfo, linkedSocials }) {
   const [stage, setStage] = useState("capture");
@@ -1730,7 +1750,7 @@ export default function App() {
   const [blockedUntil, setBlockedUntil] = useState(0);
   const [banned, setBanned] = useState(false);
   const [savedClips, setSavedClips] = useState([]);
-  const [showOnboardingTip, setShowOnboardingTip] = useState(true);
+  const [showOnboardingTip, setShowOnboardingTip] = useState(() => !localStorage.getItem("outside-onboarded"));
   const [swipeStartX, setSwipeStartX] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const screenHistory = useRef(["home"]);
@@ -1992,6 +2012,13 @@ export default function App() {
           onPost={postClip} blockInfo={blockInfo} linkedSocials={socials} />
 
         {bellOpen && <NotifSheet onClose={() => setBellOpen(false)} />}
+
+        {showOnboardingTip && screen === "home" && (
+          <OnboardingTip onDismiss={() => {
+            setShowOnboardingTip(false);
+            localStorage.setItem("outside-onboarded", "true");
+          }} />
+        )}
 
         {renewedFlash && <PremiumRenewedFlash onDone={() => setRenewedFlash(false)} />}
 
@@ -2365,6 +2392,13 @@ const CSS = `
 @keyframes toastIn{from{opacity:0; transform:translate(-50%,10px);}to{opacity:1; transform:translate(-50%,0);}}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+/* ----------------------------- onboarding ----------------------------- */
+.onboarding-overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:fadeIn .3s ease;}
+.onboarding-card{background:var(--surface); border-radius:20px; padding:28px; max-width:280px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,.3); animation:popIn .3s cubic-bezier(.32,.72,0,1);}
+.onboarding-emoji{font-size:40px; margin-bottom:12px;}
+.onboarding-card h3{font-size:18px; font-weight:700; margin-bottom:14px; letter-spacing:-.01em;}
+.onboarding-card p{font-size:13px; color:var(--muted); line-height:1.5; margin:8px 0;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 @media (prefers-reduced-motion: reduce){
   .outside *{animation:none !important; transition:none !important;}
 }
