@@ -1132,13 +1132,16 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
     if (cameraOk && streamRef.current && "MediaRecorder" in window) {
       try {
         chunksRef.current = [];
-        const mr = new MediaRecorder(streamRef.current);
-        mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+        const mr = new MediaRecorder(streamRef.current, { mimeType: "video/webm" });
+        mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
         mr.onstop = () => {
-          setRecording(false);
           const blob = new Blob(chunksRef.current, { type: "video/webm" });
-          if (blob.size > 0) setMedia(URL.createObjectURL(blob));
+          if (blob.size > 0) {
+            const url = URL.createObjectURL(blob);
+            setMedia(url);
+          }
           setStage("post");
+          setRecording(false);
           stopStream();
         };
         recRef.current = mr;
@@ -1153,8 +1156,11 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   }
   function stopRec() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    if (recRef.current && recRef.current.state === "recording") {
-      recRef.current.stop();
+    if (recRef.current) {
+      if (recRef.current.state === "recording") {
+        recRef.current.requestData();
+        recRef.current.stop();
+      }
     } else {
       setRecording(false);
       setStage("post");
