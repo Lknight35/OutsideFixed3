@@ -1136,23 +1136,8 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
         const mr = new MediaRecorder(streamRef.current);
         mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
         mr.onstop = () => {
-          setRecording(false);
-          const chunks = chunksRef.current.slice();
-          setTimeout(() => {
-            try {
-              const blob = new Blob(chunks, { type: chunks[0]?.type || "video/webm" });
-              const url = URL.createObjectURL(blob);
-              setMedia(url);
-              setTimeout(() => {
-                setStage("post");
-                stopStream();
-              }, 200);
-            } catch (e) {
-              console.error("Blob creation failed", e);
-              setStage("post");
-              stopStream();
-            }
-          }, 50);
+          const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "video/webm" });
+          setMedia(URL.createObjectURL(blob)); setStage("post"); stopStream();
         };
         recRef.current = mr; mr.start();
       } catch {}
@@ -1160,8 +1145,9 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   }
   function stopRec() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setRecording(false);
     if (recRef.current && recRef.current.state !== "inactive") recRef.current.stop();
-    else { setRecording(false); setMedia(null); setStage("post"); stopStream(); }
+    else { setMedia(null); setStage("post"); stopStream(); }
   }
   function close() { stopStream(); onClose(); }
 
