@@ -1059,6 +1059,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   const [result, setResult] = useState(null);
   const [shares, setShares] = useState({});
   const [showVideo, setShowVideo] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
 
   const camRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunksRef = useRef([]);
@@ -1202,29 +1203,21 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
           <div className="rec-post-body">
-            {showVideo && media ? (
+            {showVideo && videoReady && media ? (
               <div className="video-preview-block">
                 <div className="video-preview">
                   <video
                     ref={videoPreviewRef}
+                    src={media}
                     playsInline
                     preload="metadata"
                     className="preview-video"
                     onPlay={() => setVideoPlaying(true)}
                     onPause={() => setVideoPlaying(false)}
-                    onLoadedMetadata={() => console.log("Video metadata loaded")}
-                    onError={(e) => console.error("Video error:", e.currentTarget.error)}
                   />
                   <button className="play-overlay-btn" onClick={() => {
                     if (videoPreviewRef.current) {
-                      if (!videoPreviewRef.current.src) {
-                        videoPreviewRef.current.src = media;
-                        setTimeout(() => {
-                          videoPreviewRef.current?.play().catch(err => console.error("Play error:", err));
-                        }, 0);
-                      } else {
-                        videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
-                      }
+                      videoPreviewRef.current.paused ? videoPreviewRef.current.play().catch(() => {}) : videoPreviewRef.current.pause();
                     }
                   }}>
                     {!videoPlaying && <Play size={28} fill="#fff" />}
@@ -1233,7 +1226,10 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
                 </div>
               </div>
             ) : media ? (
-              <button className="btn-ghost" onClick={() => setShowVideo(true)} style={{ width: "100%", padding: "12px", marginBottom: "16px" }}>
+              <button className="btn-ghost" onClick={() => {
+                setShowVideo(true);
+                setTimeout(() => setVideoReady(true), 1000);
+              }} style={{ width: "100%", padding: "12px", marginBottom: "16px" }}>
                 <Play size={16} /> Preview video
               </button>
             ) : null}
