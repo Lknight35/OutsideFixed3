@@ -1342,54 +1342,37 @@ function BlockResult({ result, onClose }) {
 }
 
 function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake }) {
-  const [translateY, setTranslateY] = useState(0);
-  const [opacity, setOpacity] = useState(1);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [state, setState] = useState({ translateY: 0, opacity: 1, isAnimating: false });
   const touchStartRef = useRef(null);
+  const containerRef = useRef(null);
 
   const handleTouchStart = (e) => {
-    if (isAnimating) return;
-    touchStartRef.current = { y: e.touches[0].clientY, x: e.touches[0].clientX, time: Date.now() };
+    if (state.isAnimating) return;
+    touchStartRef.current = { y: e.touches[0].clientY, x: e.touches[0].clientX };
   };
 
   const handleTouchMove = (e) => {
-    if (!touchStartRef.current || isAnimating) return;
+    if (!touchStartRef.current || state.isAnimating) return;
     const dy = e.touches[0].clientY - touchStartRef.current.y;
-    const dx = e.touches[0].clientX - touchStartRef.current.x;
-    const distance = Math.sqrt(dy * dy + dx * dx);
-
-    setTranslateY(dy);
-    const maxDistance = 300;
-    const newOpacity = Math.max(0, 1 - (Math.abs(dy) / maxDistance));
-    setOpacity(newOpacity);
+    const newOpacity = Math.max(0, 1 - (Math.abs(dy) / 300));
+    setState((s) => ({ ...s, translateY: dy, opacity: newOpacity }));
   };
 
   const handleTouchEnd = (e) => {
-    if (!touchStartRef.current || isAnimating) return;
-
+    if (!touchStartRef.current || state.isAnimating) return;
     const dy = e.changedTouches[0].clientY - touchStartRef.current.clientY;
     const distance = Math.abs(dy);
-    const threshold = 80;
 
-    setIsAnimating(true);
-
-    if (distance > threshold) {
+    if (distance > 80) {
       // Swipe far enough - animate out
-      setTimeout(() => {
-        setTranslateY(dy > 0 ? 800 : -800);
-        setOpacity(0);
-      }, 10);
-      setTimeout(() => {
-        onClose();
-        setTranslateY(0);
-        setOpacity(1);
-        setIsAnimating(false);
-      }, 400);
+      setState((s) => ({ ...s, isAnimating: true }));
+      requestAnimationFrame(() => {
+        setState((s) => ({ ...s, translateY: dy > 0 ? 600 : -600, opacity: 0 }));
+      });
+      setTimeout(() => { onClose(); setState({ translateY: 0, opacity: 1, isAnimating: false }); }, 350);
     } else {
       // Not far enough - snap back
-      setTranslateY(0);
-      setOpacity(1);
-      setIsAnimating(false);
+      setState({ translateY: 0, opacity: 1, isAnimating: false });
     }
 
     touchStartRef.current = null;
@@ -1397,13 +1380,14 @@ function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake
 
   return (
     <div
+      ref={containerRef}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: `rgba(0, 0, 0, ${opacity})`,
+        backgroundColor: `rgba(0, 0, 0, ${state.opacity})`,
         display: "flex",
         flexDirection: "column",
         zIndex: 9999,
@@ -1416,9 +1400,9 @@ function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          transform: `translateY(${translateY}px)`,
-          opacity,
-          transition: isAnimating ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+          transform: `translateY(${state.translateY}px)`,
+          opacity: state.opacity,
+          transition: state.isAnimating ? "none" : "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
         }}
       >
         <video
@@ -1427,7 +1411,7 @@ function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake
           playsInline
           preload="metadata"
           controls
-          style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "auto" }}
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
           onPlay={() => setVideoPlaying(true)}
           onPause={() => setVideoPlaying(false)}
         />
@@ -1437,9 +1421,9 @@ function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake
           padding: "20px",
           display: "flex",
           justifyContent: "center",
-          transform: `translateY(${translateY}px)`,
-          opacity,
-          transition: isAnimating ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+          transform: `translateY(${state.translateY}px)`,
+          opacity: state.opacity,
+          transition: state.isAnimating ? "none" : "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
         }}
       >
         <button className="btn-ghost wide press" onClick={onRetake} style={{ maxWidth: "200px" }}>Retake</button>
