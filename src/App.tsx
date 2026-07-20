@@ -1132,14 +1132,25 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
     if (cameraOk && streamRef.current && "MediaRecorder" in window) {
       try {
         chunksRef.current = [];
-        const mr = new MediaRecorder(streamRef.current);
+        const options = { mimeType: 'video/webm;codecs=vp8,opus' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options.mimeType = 'video/webm;codecs=vp9,opus';
+        }
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options.mimeType = 'video/webm';
+        }
+        const mr = new MediaRecorder(streamRef.current, options);
         mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
         mr.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: chunksRef.current[0]?.type || "video/webm" });
-          setMedia(URL.createObjectURL(blob)); setStage("post"); stopStream();
+          if (chunksRef.current.length > 0) {
+            const blob = new Blob(chunksRef.current, { type: options.mimeType });
+            setMedia(URL.createObjectURL(blob)); setStage("post"); stopStream();
+          }
         };
-        recRef.current = mr; mr.start();
-      } catch {}
+        recRef.current = mr; mr.start({ audioBitsPerSecond: 128000, videoBitsPerSecond: 2500000 });
+      } catch (e) {
+        console.error("Recording error:", e);
+      }
     }
   }
   function stopRec() {
