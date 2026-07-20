@@ -1304,26 +1304,39 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
         </div>
       )}
 
-      {showVideo && media && (
-        <div style={{ position: "fixed", inset: 0, backgroundColor: "#000", display: "flex", flexDirection: "column", zIndex: 9999 }}>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-            <video
-              ref={videoPreviewRef}
-              src={media}
-              playsInline
-              preload="metadata"
-              controls
-              style={{ width: "100%", height: "100%", objectFit: "contain" }}
-              onPlay={() => setVideoPlaying(true)}
-              onPause={() => setVideoPlaying(false)}
-            />
+      {showVideo && media && (() => {
+        let touchStart = null;
+        const handleTouchStart = (e) => { touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY }; };
+        const handleTouchEnd = (e) => {
+          if (!touchStart) return;
+          const dx = Math.abs(e.changedTouches[0].clientX - touchStart.x);
+          const dy = Math.abs(e.changedTouches[0].clientY - touchStart.y);
+          if (dx > 50 || dy > 50) setShowVideo(false);
+        };
+        return (
+          <div
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            style={{ position: "fixed", inset: 0, backgroundColor: "#000", display: "flex", flexDirection: "column", zIndex: 9999 }}
+          >
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+              <video
+                ref={videoPreviewRef}
+                src={media}
+                playsInline
+                preload="metadata"
+                controls
+                style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "auto" }}
+                onPlay={() => setVideoPlaying(true)}
+                onPause={() => setVideoPlaying(false)}
+              />
+            </div>
+            <div style={{ padding: "20px", display: "flex", justifyContent: "center" }}>
+              <button className="btn-ghost wide press" onClick={() => { setMedia(null); setThumb(null); setShowVideo(false); setStage("capture"); }} style={{ maxWidth: "200px" }}>Retake</button>
+            </div>
           </div>
-          <div style={{ padding: "16px", display: "flex", gap: "12px", backgroundColor: "rgba(0,0,0,0.8)" }}>
-            <button className="btn-amber wide press" onClick={() => { setShowVideo(false); }} style={{ flex: 1 }}>Back to review</button>
-            <button className="btn-ghost wide press" onClick={() => { setMedia(null); setThumb(null); setShowVideo(false); setStage("capture"); }} style={{ flex: 1 }}>Retake</button>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {stage === "result" && result && <BlockResult result={result} onClose={close} />}
     </div>
