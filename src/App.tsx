@@ -1194,9 +1194,12 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             {showVideo && media ? (
               <div className="video-preview-block">
                 <div className="video-preview">
-                  <video ref={videoPreviewRef} src={media} playsInline preload="none" className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} autoPlay />
+                  <video ref={videoPreviewRef} playsInline preload="none" className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
                   <button className="play-overlay-btn" onClick={() => {
                     if (videoPreviewRef.current) {
+                      if (!videoPreviewRef.current.src) {
+                        videoPreviewRef.current.src = media;
+                      }
                       videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
                     }
                   }}>
