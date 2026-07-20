@@ -1199,8 +1199,14 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
                     if (videoPreviewRef.current) {
                       if (!videoPreviewRef.current.src) {
                         videoPreviewRef.current.src = media;
+                        if ("requestIdleCallback" in window) {
+                          requestIdleCallback(() => videoPreviewRef.current?.play().catch(() => {}));
+                        } else {
+                          setTimeout(() => videoPreviewRef.current?.play().catch(() => {}), 100);
+                        }
+                      } else {
+                        videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
                       }
-                      videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
                     }
                   }}>
                     {!videoPlaying && <Play size={28} fill="#fff" />}
