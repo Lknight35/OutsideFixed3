@@ -1059,8 +1059,8 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   const [result, setResult] = useState(null);
   const [shares, setShares] = useState({});
   const [showVideo, setShowVideo] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [scrubbing, setScrubbing] = useState(false);
 
   const camRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunksRef = useRef([]);
   const timerRef = useRef(null), thumbVideoRef = useRef(null), canvasRef = useRef(null), videoPreviewRef = useRef(null);
@@ -1210,24 +1210,58 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             ) : null}
 
             <div className="thumb-block">
-              <div className="thumb-preview">
-                {media && thumb ? <img src={thumb} alt="thumbnail" /> : <VibeGradient catId={cat || "events"} animated />}
+              <div className="thumb-preview" style={{ position: "relative" }}>
+                {media && thumb ? (
+                  <>
+                    <img src={thumb} alt="thumbnail" style={{ width: "100%", display: "block" }} />
+                    {!scrubbing && (
+                      <button
+                        onClick={() => setShowVideo(true)}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Play size={48} fill="rgba(255,255,255,0.7)" color="rgba(255,255,255,0.7)" />
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <VibeGradient catId={cat || "events"} animated />
+                )}
                 {media && <video ref={thumbVideoRef} src={media} muted playsInline preload="metadata" style={{ display: "none" }} />}
                 <canvas ref={canvasRef} style={{ display: "none" }} />
               </div>
               {media && duration > 0 ? (
-                <div className="thumb-scrub no-swipe">
-                  <span className="thumb-label">slide to pick a thumbnail</span>
-                  <input type="range" min={0} max={duration} step={0.05} value={thumbTime}
-                    onChange={(e) => { const t = parseFloat(e.target.value); setThumbTime(t); const v = thumbVideoRef.current; if (v) v.currentTime = t; }} />
+                <div className="thumb-scrub no-swipe" style={{ padding: "16px 0" }}>
+                  <span className="thumb-label" style={{ display: "block", marginBottom: "12px", fontSize: "14px", color: "#999" }}>slide to pick a thumbnail</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration}
+                    step={0.05}
+                    value={thumbTime}
+                    onMouseDown={() => setScrubbing(true)}
+                    onMouseUp={() => setScrubbing(false)}
+                    onTouchStart={() => setScrubbing(true)}
+                    onTouchEnd={() => setScrubbing(false)}
+                    onChange={(e) => { const t = parseFloat(e.target.value); setThumbTime(t); const v = thumbVideoRef.current; if (v) v.currentTime = t; }}
+                    style={{ width: "100%" }}
+                  />
                 </div>
               ) : media ? (
-                <button className="btn-ghost sm" onClick={drawThumb}>Use current frame</button>
+                <button className="btn-ghost sm" onClick={drawThumb} style={{ marginTop: "12px" }}>Use current frame</button>
               ) : null}
-              <button className="btn-ghost sm" onClick={() => { setMedia(null); setThumb(null); setStage("capture"); }}><RotateCcw size={15} /> Retake</button>
+              <button className="btn-ghost sm" onClick={() => { setMedia(null); setThumb(null); setStage("capture"); }} style={{ marginTop: "12px" }}><RotateCcw size={15} /> Retake</button>
             </div>
 
-            <h4 className="sec-label">Where is this?</h4>
+            <h4 className="sec-label" style={{ marginTop: "20px" }}>📍 Where is this?</h4>
             {loc ? (
               <div className="chosen-place">
                 <span className="place-row-thumb"><VibeGradient catId={cat || "events"} /></span>
@@ -1241,7 +1275,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
               <LocationSearch placeholder="Search a place or landmark…" onPick={(p) => { setLoc(p); if (p.placeId && placeById[p.placeId]) setCat((x) => x || placeById[p.placeId].cat); }} />
             )}
 
-            <h4 className="sec-label">What's the vibe?</h4>
+            <h4 className="sec-label" style={{ marginTop: "20px" }}>✨ What's the vibe?</h4>
             <div className="cat-pick">
               {CATEGORIES.map((c) => (
                 <button key={c.id} className={"chip" + (cat === c.id ? " chip-on" : "")} onClick={() => setCat(c.id)}>
