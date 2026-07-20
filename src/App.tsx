@@ -1058,6 +1058,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   const [thumbTime, setThumbTime] = useState(0);
   const [result, setResult] = useState(null);
   const [shares, setShares] = useState({});
+  const [showVideo, setShowVideo] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
 
   const camRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunksRef = useRef([]);
@@ -1190,25 +1191,25 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
           <div className="rec-post-body">
-            <div className="video-preview-block">
-              <div className="video-preview">
-                {media ? (
-                  <>
-                    <video ref={videoPreviewRef} src={media} playsInline preload="none" className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
-                    <button className="play-overlay-btn" onClick={() => {
-                      if (videoPreviewRef.current) {
-                        videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
-                      }
-                    }}>
-                      {!videoPlaying && <Play size={28} fill="#fff" />}
-                    </button>
-                  </>
-                ) : (
-                  <VibeGradient catId={cat || "events"} animated />
-                )}
-                <span className="fcard-shade" />
+            {showVideo && media ? (
+              <div className="video-preview-block">
+                <div className="video-preview">
+                  <video ref={videoPreviewRef} src={media} playsInline preload="none" className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} autoPlay />
+                  <button className="play-overlay-btn" onClick={() => {
+                    if (videoPreviewRef.current) {
+                      videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
+                    }
+                  }}>
+                    {!videoPlaying && <Play size={28} fill="#fff" />}
+                  </button>
+                  <span className="fcard-shade" />
+                </div>
               </div>
-            </div>
+            ) : media ? (
+              <button className="btn-ghost" onClick={() => setShowVideo(true)} style={{ width: "100%", padding: "12px", marginBottom: "16px" }}>
+                <Play size={16} /> Preview video
+              </button>
+            ) : null}
 
             <div className="thumb-block">
               <div className="thumb-preview">
