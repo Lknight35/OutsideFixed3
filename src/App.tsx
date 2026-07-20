@@ -1304,39 +1304,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
         </div>
       )}
 
-      {showVideo && media && (() => {
-        let touchStart = null;
-        const handleTouchStart = (e) => { touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY }; };
-        const handleTouchEnd = (e) => {
-          if (!touchStart) return;
-          const dx = Math.abs(e.changedTouches[0].clientX - touchStart.x);
-          const dy = Math.abs(e.changedTouches[0].clientY - touchStart.y);
-          if (dx > 50 || dy > 50) setShowVideo(false);
-        };
-        return (
-          <div
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            style={{ position: "fixed", inset: 0, backgroundColor: "#000", display: "flex", flexDirection: "column", zIndex: 9999 }}
-          >
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-              <video
-                ref={videoPreviewRef}
-                src={media}
-                playsInline
-                preload="metadata"
-                controls
-                style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "auto" }}
-                onPlay={() => setVideoPlaying(true)}
-                onPause={() => setVideoPlaying(false)}
-              />
-            </div>
-            <div style={{ padding: "20px", display: "flex", justifyContent: "center" }}>
-              <button className="btn-ghost wide press" onClick={() => { setMedia(null); setThumb(null); setShowVideo(false); setStage("capture"); }} style={{ maxWidth: "200px" }}>Retake</button>
-            </div>
-          </div>
-        );
-      })()}
+      {showVideo && media && <VideoModal media={media} videoPreviewRef={videoPreviewRef} setVideoPlaying={setVideoPlaying} onClose={() => setShowVideo(false)} onRetake={() => { setMedia(null); setThumb(null); setShowVideo(false); setStage("capture"); }} />}
 
       {stage === "result" && result && <BlockResult result={result} onClose={close} />}
     </div>
@@ -1368,6 +1336,113 @@ function BlockResult({ result, onClose }) {
           </ol>
         </div>
         <button className="btn-amber wide press" onClick={onClose}>Got it</button>
+      </div>
+    </div>
+  );
+}
+
+function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake }) {
+  const [translateY, setTranslateY] = useState(0);
+  const [opacity, setOpacity] = useState(1);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const touchStartRef = useRef(null);
+
+  const handleTouchStart = (e) => {
+    if (isAnimating) return;
+    touchStartRef.current = { y: e.touches[0].clientY, x: e.touches[0].clientX, time: Date.now() };
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStartRef.current || isAnimating) return;
+    const dy = e.touches[0].clientY - touchStartRef.current.y;
+    const dx = e.touches[0].clientX - touchStartRef.current.x;
+    const distance = Math.sqrt(dy * dy + dx * dx);
+
+    setTranslateY(dy);
+    const maxDistance = 300;
+    const newOpacity = Math.max(0, 1 - (Math.abs(dy) / maxDistance));
+    setOpacity(newOpacity);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!touchStartRef.current || isAnimating) return;
+
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.clientY;
+    const distance = Math.abs(dy);
+    const threshold = 80;
+
+    setIsAnimating(true);
+
+    if (distance > threshold) {
+      // Swipe far enough - animate out
+      setTimeout(() => {
+        setTranslateY(dy > 0 ? 800 : -800);
+        setOpacity(0);
+      }, 10);
+      setTimeout(() => {
+        onClose();
+        setTranslateY(0);
+        setOpacity(1);
+        setIsAnimating(false);
+      }, 400);
+    } else {
+      // Not far enough - snap back
+      setTranslateY(0);
+      setOpacity(1);
+      setIsAnimating(false);
+    }
+
+    touchStartRef.current = null;
+  };
+
+  return (
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: `rgba(0, 0, 0, ${opacity})`,
+        display: "flex",
+        flexDirection: "column",
+        zIndex: 9999,
+      }}
+    >
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          transform: `translateY(${translateY}px)`,
+          opacity,
+          transition: isAnimating ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        }}
+      >
+        <video
+          ref={videoPreviewRef}
+          src={media}
+          playsInline
+          preload="metadata"
+          controls
+          style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "auto" }}
+          onPlay={() => setVideoPlaying(true)}
+          onPause={() => setVideoPlaying(false)}
+        />
+      </div>
+      <div
+        style={{
+          padding: "20px",
+          display: "flex",
+          justifyContent: "center",
+          transform: `translateY(${translateY}px)`,
+          opacity,
+          transition: isAnimating ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        }}
+      >
+        <button className="btn-ghost wide press" onClick={onRetake} style={{ maxWidth: "200px" }}>Retake</button>
       </div>
     </div>
   );
