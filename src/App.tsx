@@ -1058,11 +1058,9 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   const [thumbTime, setThumbTime] = useState(0);
   const [result, setResult] = useState(null);
   const [shares, setShares] = useState({});
-  const [savedClips, setSavedClips] = useState([]);
-  const [videoPlaying, setVideoPlaying] = useState(false);
 
   const camRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunksRef = useRef([]);
-  const timerRef = useRef(null), thumbVideoRef = useRef(null), canvasRef = useRef(null), videoPreviewRef = useRef(null);
+  const timerRef = useRef(null), thumbVideoRef = useRef(null), canvasRef = useRef(null);
   const MAX_S = 15;
   const linkedKeys = PLATFORMS.filter((p) => linkedSocials[p.key]);
 
@@ -1167,10 +1165,11 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
         <div className="rec-capture">
           <div className="rec-view">
             {cameraOk
-              ? <video ref={camRef} muted autoPlay playsInline className="rec-cam" />
+              ? <video ref={camRef} muted playsInline className="rec-cam" />
               : <div className="rec-sim"><div className="vibe-sweep" /><div className="rec-sim-text">{cameraOk === false ? "camera unavailable in preview — you can still post a simulated clip" : "starting camera…"}</div></div>}
             <div className="rec-grid-lines" aria-hidden />
             <button className="icon-btn glass rec-x" onClick={close}><X size={20} /></button>
+            <div className="rec-toptag"><span className="rec-recdot" /> record only · no uploads</div>
             {recording && <div className="rec-timer mono"><span className="rec-recdot pulsing" /> {elapsed.toFixed(1)}s / {MAX_S}s</div>}
           </div>
           <div className="rec-controls">
@@ -1186,50 +1185,29 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
         <div className="rec-post">
           <div className="rec-post-head">
             <button className="icon-btn" onClick={() => { setMedia(null); setStage("capture"); }}><ArrowLeft size={20} /></button>
-            <h3>Review & Share</h3>
+            <h3>New clip</h3>
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
           <div className="rec-post-body">
-            <div className="video-preview-block">
-              <div className="video-preview">
-                {media ? (
-                  <>
-                    <video ref={videoPreviewRef} src={media} playsInline className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
-                    <button className="play-overlay-btn" onClick={() => {
-                      if (videoPreviewRef.current) {
-                        videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
-                      }
-                    }}>
-                      {!videoPlaying && <Play size={28} fill="#fff" />}
-                    </button>
-                  </>
-                ) : (
-                  <VibeGradient catId={cat || "events"} animated />
-                )}
-                <span className="fcard-shade" />
+            <div className="thumb-block">
+              <div className="thumb-preview">
+                {media && thumb ? <img src={thumb} alt="thumbnail" /> : <VibeGradient catId={cat || "events"} animated />}
+                {media && <video ref={thumbVideoRef} src={media} muted playsInline preload="metadata" style={{ display: "none" }} />}
+                <canvas ref={canvasRef} style={{ display: "none" }} />
               </div>
-
-              {media && (
-                <div className="preview-controls">
-                  <div className="button-group">
-                    <button className="btn-ghost sm" onClick={() => setSavedClips([...savedClips, { id: Date.now(), media, loc, cat, thumb }])}><Heart size={15} /> Save for later</button>
-                    <button className="btn-ghost sm" onClick={() => { setMedia(null); setThumb(null); setStage("capture"); }}><RotateCcw size={15} /> Retake</button>
-                  </div>
-                </div>
-              )}
-
-              {media && duration > 0 && (
+              {media && duration > 0 ? (
                 <div className="thumb-scrub no-swipe">
-                  <span className="thumb-label">pick thumbnail: {fmtDur(thumbTime)}</span>
+                  <span className="thumb-label">slide to pick a thumbnail</span>
                   <input type="range" min={0} max={duration} step={0.05} value={thumbTime}
                     onChange={(e) => { const t = parseFloat(e.target.value); setThumbTime(t); const v = thumbVideoRef.current; if (v) v.currentTime = t; }} />
-                  {media && <video ref={thumbVideoRef} src={media} muted playsInline preload="metadata" style={{ display: "none" }} />}
-                  <canvas ref={canvasRef} style={{ display: "none" }} />
                 </div>
-              )}
+              ) : media ? (
+                <button className="btn-ghost sm" onClick={drawThumb}>Use current frame</button>
+              ) : null}
+              <button className="btn-ghost sm" onClick={() => { setMedia(null); setThumb(null); setStage("capture"); }}><RotateCcw size={15} /> Retake</button>
             </div>
 
-            <h4 className="sec-label">📍 Where is this?</h4>
+            <h4 className="sec-label">Where is this?</h4>
             {loc ? (
               <div className="chosen-place">
                 <span className="place-row-thumb"><VibeGradient catId={cat || "events"} /></span>
@@ -1243,22 +1221,22 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
               <LocationSearch placeholder="Search a place or landmark…" onPick={(p) => { setLoc(p); if (p.placeId && placeById[p.placeId]) setCat((x) => x || placeById[p.placeId].cat); }} />
             )}
 
-            <h4 className="sec-label">✨ What's the vibe?</h4>
+            <h4 className="sec-label">What's the vibe?</h4>
             <div className="cat-pick">
               {CATEGORIES.map((c) => (
-                <button key={c.id} className={"chip" + (cat === c.id ? " chip-on" : "")} onClick={() => { setCat(c.id); if (navigator.vibrate) navigator.vibrate(10); }}>
+                <button key={c.id} className={"chip" + (cat === c.id ? " chip-on" : "")} onClick={() => setCat(c.id)}>
                   <CatIcon id={c.id} size={13} strokeWidth={2.3} /> {c.label}
                 </button>
               ))}
             </div>
 
-            <h4 className="sec-label">📱 Also share to</h4>
+            <h4 className="sec-label">Also share to</h4>
             {linkedKeys.length === 0 ? (
-              <p className="muted-line">No accounts linked. You can optionally link Instagram, TikTok, Snapchat, Facebook, or X in your Saved section to auto-share clips.</p>
+              <p className="muted-line">No accounts linked. Link Instagram, TikTok and more in <b>Saved</b> to auto-share when you post.</p>
             ) : (
               <div className="share-row">
                 {linkedKeys.map((p) => (
-                  <button key={p.key} className={"share-toggle" + (shares[p.key] ? " on" : "")} onClick={() => { setShares((s) => ({ ...s, [p.key]: !s[p.key] })); if (navigator.vibrate) navigator.vibrate(8); }}>
+                  <button key={p.key} className={"share-toggle" + (shares[p.key] ? " on" : "")} onClick={() => setShares((s) => ({ ...s, [p.key]: !s[p.key] }))}>
                     <SocialBadge p={p} size={22} /> {p.label}
                     {shares[p.key] && <Check size={14} className="share-check" />}
                   </button>
@@ -1267,7 +1245,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             )}
           </div>
           <div className="rec-post-bar">
-            <button className="btn-amber wide press" disabled={!canPost} onClick={submit}>{canPost ? "Post clip" : "Add a place and vibe"}</button>
+            <button className="btn-amber wide press" disabled={!canPost} onClick={submit}>{canPost ? "Post" : "Add a place and a vibe"}</button>
           </div>
         </div>
       )}
