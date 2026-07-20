@@ -1072,7 +1072,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
     const preset = presetPlaceId ? placeById[presetPlaceId] : null;
     setStage(blockInfo.blocked ? "result" : "capture");
     setResult(blockInfo.blocked ? { kind: blockInfo.banned ? "ban" : "block", until: blockInfo.until } : null);
-    setRecording(false); setElapsed(0); setMedia(null); setThumb(null); setDuration(0); setThumbTime(0);
+    setRecording(false); setElapsed(0); setMedia(null); setThumb(null); setDuration(0); setThumbTime(0); setShowVideo(false); setVideoReady(false);
     setLoc(preset ? { name: preset.name, city: preset.city, state: preset.state, country: preset.country, placeId: preset.id } : null);
     setCat(preset ? preset.cat : null);
     setShares(Object.fromEntries(linkedKeys.map((p) => [p.key, true])));
@@ -1203,33 +1203,8 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
           <div className="rec-post-body">
-            {showVideo && videoReady && media ? (
-              <div className="video-preview-block">
-                <div className="video-preview">
-                  <video
-                    ref={videoPreviewRef}
-                    src={media}
-                    playsInline
-                    preload="metadata"
-                    className="preview-video"
-                    onPlay={() => setVideoPlaying(true)}
-                    onPause={() => setVideoPlaying(false)}
-                  />
-                  <button className="play-overlay-btn" onClick={() => {
-                    if (videoPreviewRef.current) {
-                      videoPreviewRef.current.paused ? videoPreviewRef.current.play().catch(() => {}) : videoPreviewRef.current.pause();
-                    }
-                  }}>
-                    {!videoPlaying && <Play size={28} fill="#fff" />}
-                  </button>
-                  <span className="fcard-shade" />
-                </div>
-              </div>
-            ) : media ? (
-              <button className="btn-ghost" onClick={() => {
-                setShowVideo(true);
-                setTimeout(() => setVideoReady(true), 1000);
-              }} style={{ width: "100%", padding: "12px", marginBottom: "16px" }}>
+            {media ? (
+              <button className="btn-ghost" onClick={() => setShowVideo(true)} style={{ width: "100%", padding: "12px", marginBottom: "16px" }}>
                 <Play size={16} /> Preview video
               </button>
             ) : null}
@@ -1291,6 +1266,27 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
           </div>
           <div className="rec-post-bar">
             <button className="btn-amber wide press" disabled={!canPost} onClick={submit}>{canPost ? "Post" : "Add a place and a vibe"}</button>
+          </div>
+        </div>
+      )}
+
+      {showVideo && media && (
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "#000", display: "flex", flexDirection: "column", zIndex: 9999 }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+            <video
+              ref={videoPreviewRef}
+              src={media}
+              playsInline
+              preload="metadata"
+              controls
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              onPlay={() => setVideoPlaying(true)}
+              onPause={() => setVideoPlaying(false)}
+            />
+          </div>
+          <div style={{ padding: "16px", display: "flex", gap: "12px", backgroundColor: "rgba(0,0,0,0.8)" }}>
+            <button className="btn-amber wide press" onClick={() => { setShowVideo(false); setVideoReady(false); }} style={{ flex: 1 }}>Back to review</button>
+            <button className="btn-ghost wide press" onClick={() => { setMedia(null); setThumb(null); setShowVideo(false); setVideoReady(false); setStage("capture"); }} style={{ flex: 1 }}>Retake</button>
           </div>
         </div>
       )}
