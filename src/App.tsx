@@ -1058,9 +1058,10 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
   const [thumbTime, setThumbTime] = useState(0);
   const [result, setResult] = useState(null);
   const [shares, setShares] = useState({});
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
   const camRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunksRef = useRef([]);
-  const timerRef = useRef(null), thumbVideoRef = useRef(null), canvasRef = useRef(null);
+  const timerRef = useRef(null), thumbVideoRef = useRef(null), canvasRef = useRef(null), videoPreviewRef = useRef(null);
   const MAX_S = 15;
   const linkedKeys = PLATFORMS.filter((p) => linkedSocials[p.key]);
 
@@ -1189,6 +1190,26 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
           <div className="rec-post-body">
+            <div className="video-preview-block">
+              <div className="video-preview">
+                {media ? (
+                  <>
+                    <video ref={videoPreviewRef} src={media} playsInline preload="none" className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
+                    <button className="play-overlay-btn" onClick={() => {
+                      if (videoPreviewRef.current) {
+                        videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
+                      }
+                    }}>
+                      {!videoPlaying && <Play size={28} fill="#fff" />}
+                    </button>
+                  </>
+                ) : (
+                  <VibeGradient catId={cat || "events"} animated />
+                )}
+                <span className="fcard-shade" />
+              </div>
+            </div>
+
             <div className="thumb-block">
               <div className="thumb-preview">
                 {media && thumb ? <img src={thumb} alt="thumbnail" /> : <VibeGradient catId={cat || "events"} animated />}
