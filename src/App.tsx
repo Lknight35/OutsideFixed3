@@ -1194,16 +1194,23 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             {showVideo && media ? (
               <div className="video-preview-block">
                 <div className="video-preview">
-                  <video ref={videoPreviewRef} playsInline preload="none" className="preview-video" onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
+                  <video
+                    ref={videoPreviewRef}
+                    playsInline
+                    preload="metadata"
+                    className="preview-video"
+                    onPlay={() => setVideoPlaying(true)}
+                    onPause={() => setVideoPlaying(false)}
+                    onLoadedMetadata={() => console.log("Video metadata loaded")}
+                    onError={(e) => console.error("Video error:", e.currentTarget.error)}
+                  />
                   <button className="play-overlay-btn" onClick={() => {
                     if (videoPreviewRef.current) {
                       if (!videoPreviewRef.current.src) {
                         videoPreviewRef.current.src = media;
-                        if ("requestIdleCallback" in window) {
-                          requestIdleCallback(() => videoPreviewRef.current?.play().catch(() => {}));
-                        } else {
-                          setTimeout(() => videoPreviewRef.current?.play().catch(() => {}), 100);
-                        }
+                        setTimeout(() => {
+                          videoPreviewRef.current?.play().catch(err => console.error("Play error:", err));
+                        }, 0);
                       } else {
                         videoPreviewRef.current.paused ? videoPreviewRef.current.play() : videoPreviewRef.current.pause();
                       }
