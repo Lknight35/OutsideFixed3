@@ -1072,7 +1072,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
     const preset = presetPlaceId ? placeById[presetPlaceId] : null;
     setStage(blockInfo.blocked ? "result" : "capture");
     setResult(blockInfo.blocked ? { kind: blockInfo.banned ? "ban" : "block", until: blockInfo.until } : null);
-    setRecording(false); setElapsed(0); setMedia(null); setThumb(null); setDuration(0); setThumbTime(0); setShowVideo(false); setVideoReady(false);
+    setRecording(false); setElapsed(0); setMedia(null); setThumb(null); setDuration(0); setThumbTime(0); setShowVideo(false);
     setLoc(preset ? { name: preset.name, city: preset.city, state: preset.state, country: preset.country, placeId: preset.id } : null);
     setCat(preset ? preset.cat : null);
     setShares(Object.fromEntries(linkedKeys.map((p) => [p.key, true])));
@@ -1319,8 +1319,8 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             />
           </div>
           <div style={{ padding: "16px", display: "flex", gap: "12px", backgroundColor: "rgba(0,0,0,0.8)" }}>
-            <button className="btn-amber wide press" onClick={() => { setShowVideo(false); setVideoReady(false); }} style={{ flex: 1 }}>Back to review</button>
-            <button className="btn-ghost wide press" onClick={() => { setMedia(null); setThumb(null); setShowVideo(false); setVideoReady(false); setStage("capture"); }} style={{ flex: 1 }}>Retake</button>
+            <button className="btn-amber wide press" onClick={() => { setShowVideo(false); }} style={{ flex: 1 }}>Back to review</button>
+            <button className="btn-ghost wide press" onClick={() => { setMedia(null); setThumb(null); setShowVideo(false); setStage("capture"); }} style={{ flex: 1 }}>Retake</button>
           </div>
         </div>
       )}
