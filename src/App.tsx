@@ -1342,7 +1342,7 @@ function BlockResult({ result, onClose }) {
 }
 
 function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake }) {
-  const [state, setState] = useState({ translateY: 0, opacity: 1, isAnimating: false });
+  const [state, setState] = useState({ translateX: 0, translateY: 0, opacity: 1, isAnimating: false });
   const touchStartRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -1353,26 +1353,33 @@ function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake
 
   const handleTouchMove = (e) => {
     if (!touchStartRef.current || state.isAnimating) return;
+    const dx = e.touches[0].clientX - touchStartRef.current.x;
     const dy = e.touches[0].clientY - touchStartRef.current.y;
-    const newOpacity = Math.max(0, 1 - (Math.abs(dy) / 300));
-    setState((s) => ({ ...s, translateY: dy, opacity: newOpacity }));
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const newOpacity = Math.max(0, 1 - (distance / 300));
+    setState((s) => ({ ...s, translateX: dx, translateY: dy, opacity: newOpacity }));
   };
 
   const handleTouchEnd = (e) => {
     if (!touchStartRef.current || state.isAnimating) return;
-    const dy = e.changedTouches[0].clientY - touchStartRef.current.clientY;
-    const distance = Math.abs(dy);
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance > 80) {
       // Swipe far enough - animate out
       setState((s) => ({ ...s, isAnimating: true }));
-      requestAnimationFrame(() => {
-        setState((s) => ({ ...s, translateY: dy > 0 ? 600 : -600, opacity: 0 }));
-      });
-      setTimeout(() => { onClose(); setState({ translateY: 0, opacity: 1, isAnimating: false }); }, 350);
+      const outX = dx > 0 ? 800 : -800;
+      const outY = dy > 0 ? 800 : -800;
+      setTimeout(() => {
+        setState({ translateX: outX, translateY: outY, opacity: 0, isAnimating: true });
+      }, 0);
+      setTimeout(() => {
+        onClose();
+      }, 350);
     } else {
       // Not far enough - snap back
-      setState({ translateY: 0, opacity: 1, isAnimating: false });
+      setState({ translateX: 0, translateY: 0, opacity: 1, isAnimating: false });
     }
 
     touchStartRef.current = null;
@@ -1391,6 +1398,7 @@ function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake
         display: "flex",
         flexDirection: "column",
         zIndex: 9999,
+        overflow: "hidden",
       }}
     >
       <div
@@ -1400,9 +1408,9 @@ function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          transform: `translateY(${state.translateY}px)`,
+          transform: `translate(${state.translateX}px, ${state.translateY}px)`,
           opacity: state.opacity,
-          transition: state.isAnimating ? "none" : "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+          transition: state.isAnimating && state.opacity === 0 ? "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)" : "none",
         }}
       >
         <video
@@ -1421,9 +1429,9 @@ function VideoModal({ media, videoPreviewRef, setVideoPlaying, onClose, onRetake
           padding: "20px",
           display: "flex",
           justifyContent: "center",
-          transform: `translateY(${state.translateY}px)`,
+          transform: `translate(${state.translateX}px, ${state.translateY}px)`,
           opacity: state.opacity,
-          transition: state.isAnimating ? "none" : "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+          transition: state.isAnimating && state.opacity === 0 ? "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)" : "none",
         }}
       >
         <button className="btn-ghost wide press" onClick={onRetake} style={{ maxWidth: "200px" }}>Retake</button>
