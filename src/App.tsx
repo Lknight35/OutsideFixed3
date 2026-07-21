@@ -1119,11 +1119,13 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
       } else setDuration(d);
       v.currentTime = 0.1; setThumbTime(0.1);
     };
-    const onSeeked = () => drawThumb();
+    const onSeeked = () => { setTimeout(() => drawThumb(), 50); };
+    const onCanPlay = () => { setTimeout(() => drawThumb(), 50); };
     v.addEventListener("loadedmetadata", onMeta);
     v.addEventListener("seeked", onSeeked);
-    if (v.readyState >= 1) onMeta();
-    return () => { v.removeEventListener("loadedmetadata", onMeta); v.removeEventListener("seeked", onSeeked); };
+    v.addEventListener("canplay", onCanPlay);
+    if (v.readyState >= 2) { onMeta(); onSeeked(); }
+    return () => { v.removeEventListener("loadedmetadata", onMeta); v.removeEventListener("seeked", onSeeked); v.removeEventListener("canplay", onCanPlay); };
   }, [stage, media, drawThumb]);
 
   function startRec() {
@@ -1202,13 +1204,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             <h3>New clip</h3>
             <button className="icon-btn" onClick={close}><X size={20} /></button>
           </div>
-          <div className="rec-post-body">
-            {media ? (
-              <button className="btn-ghost" onClick={() => setShowVideo(true)} style={{ width: "100%", padding: "12px", marginBottom: "16px" }}>
-                <Play size={16} /> Preview video
-              </button>
-            ) : null}
-
+          <div className="rec-post-body" style={{ overflowY: "auto", maxHeight: "calc(100vh - 280px)", paddingRight: "8px" }}>
             <div className="thumb-block">
               <div className="thumb-preview" style={{ position: "relative" }}>
                 {media && thumb ? (
