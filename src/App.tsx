@@ -1088,7 +1088,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
     async function go() {
       if (!open || stage !== "capture") return;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
         if (camRef.current) { camRef.current.srcObject = stream; camRef.current.play().catch(() => {}); }
@@ -1150,7 +1150,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             setMedia(URL.createObjectURL(blob)); setStage("post"); stopStream();
           }
         };
-        recRef.current = mr; mr.start({ audioBitsPerSecond: 128000, videoBitsPerSecond: 2500000 });
+        recRef.current = mr; mr.start({ audioBitsPerSecond: 256000, videoBitsPerSecond: 2500000 });
       } catch (e) {
         console.error("Recording error:", e);
       }
