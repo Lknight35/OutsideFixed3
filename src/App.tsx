@@ -1150,7 +1150,7 @@ function RecordModal({ open, onClose, presetPlaceId, placeById, onPost, blockInf
             setMedia(URL.createObjectURL(blob)); setStage("post"); stopStream();
           }
         };
-        recRef.current = mr; mr.start({ audioBitsPerSecond: 256000, videoBitsPerSecond: 2500000 });
+        recRef.current = mr; mr.start({ audioBitsPerSecond: 512000, videoBitsPerSecond: 2500000 });
       } catch (e) {
         console.error("Recording error:", e);
       }
