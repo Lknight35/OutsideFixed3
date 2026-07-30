@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, createContext, useContext } from "react";
 import {
   Home, Search, Bookmark, BookmarkCheck, Video, X, ArrowLeft, MapPin,
   Square, RotateCcw, Plus, Check, AlertTriangle, Ban, Clock, Flag,
@@ -12,6 +12,69 @@ import {
    Place-first, record-only video. No profiles / followers / likes /
    comments / DMs / maps / heatmaps / camera-roll uploads. Newest first.
    ========================================================================= */
+
+/* ========================= navigation stack context ===================== */
+const NavigationContext = createContext(null);
+function useNavigation() { return useContext(NavigationContext); }
+
+function NavigationProvider({ children }) {
+  const [stack, setStack] = useState([]);
+  const [gestureProgress, setGestureProgress] = useState(0);
+  const [isGestureActive, setIsGestureActive] = useState(false);
+  const gestureStartRef = useRef(null);
+
+  const push = useCallback((screen) => {
+    setStack(prev => [...prev, screen]);
+  }, []);
+
+  const pop = useCallback(() => {
+    setStack(prev => prev.slice(0, -1));
+  }, []);
+
+  const handleGestureStart = useCallback((x) => {
+    if (stack.length <= 1) return;
+    gestureStartRef.current = { startX: x, startTime: Date.now() };
+    setIsGestureActive(true);
+  }, [stack.length]);
+
+  const handleGestureMove = useCallback((x) => {
+    if (!gestureStartRef.current || !isGestureActive) return;
+    const dx = x - gestureStartRef.current.startX;
+    const screenWidth = Math.min(430, window.innerWidth);
+    const progress = Math.max(0, Math.min(1, dx / (screenWidth * 0.4)));
+    setGestureProgress(progress);
+  }, [isGestureActive]);
+
+  const handleGestureEnd = useCallback((x) => {
+    if (!gestureStartRef.current) return;
+    const dx = x - gestureStartRef.current.startX;
+    const dt = Date.now() - gestureStartRef.current.startTime;
+    const velocity = Math.abs(dx) / dt;
+    const screenWidth = Math.min(430, window.innerWidth);
+    const progress = Math.max(0, Math.min(1, dx / (screenWidth * 0.4)));
+    const shouldDismiss = progress > 0.35 || (velocity > 1 && dx > 30);
+
+    if (shouldDismiss && stack.length > 1) {
+      setGestureProgress(1);
+      setTimeout(() => {
+        pop();
+        setGestureProgress(0);
+        setIsGestureActive(false);
+        gestureStartRef.current = null;
+      }, 160);
+    } else {
+      setGestureProgress(0);
+      setIsGestureActive(false);
+      gestureStartRef.current = null;
+    }
+  }, [stack.length, pop]);
+
+  return (
+    <NavigationContext.Provider value={{ stack, push, pop, gestureProgress, isGestureActive, handleGestureStart, handleGestureMove, handleGestureEnd }}>
+      {children}
+    </NavigationContext.Provider>
+  );
+}
 
 /* ----------------------------- categories ------------------------------ */
 const CATEGORIES = [
@@ -395,7 +458,7 @@ function HeroTop({ tint, onSearch, onBell }) {
 }
 
 /* --------------------- swipe-right-to-go-back page ---------------------- */
-function SwipePage({ onBack, children }) {
+function SwipePage({ onBack, children, onGestureProgress }) {
   const [dx, setDx] = useState(0);
   const [anim, setAnim] = useState(true);
   const leavingRef = useRef(false);
@@ -417,7 +480,15 @@ function SwipePage({ onBack, children }) {
     if (s.locked == null && Math.hypot(dX, dY) > 10) {
       s.locked = dX > 0 && Math.abs(dX) > Math.abs(dY) * 1.2 ? "x" : "other";
     }
-    if (s.locked === "x") setDx(Math.max(0, dX));
+    if (s.locked === "x") {
+      const newDx = Math.max(0, dX);
+      setDx(newDx);
+      if (onGestureProgress) {
+        const screenWidth = Math.min(430, window.innerWidth);
+        const progress = Math.min(1, newDx / (screenWidth * 0.4));
+        onGestureProgress(progress);
+      }
+    }
   };
   const end = () => {
     const s = g.current; g.current = null;
@@ -426,10 +497,15 @@ function SwipePage({ onBack, children }) {
     if (s.locked === "x" && dx > 8) suppress.current = true;
     if (s.locked === "x" && (dx > 100 || (dx > 44 && s.vx > 0.55))) {
       leavingRef.current = true;
-      onBack();
-      setDx(window.innerWidth || 480);
+      if (onGestureProgress) onGestureProgress(1);
+      setTimeout(() => {
+        onBack();
+        setDx(window.innerWidth || 480);
+        if (onGestureProgress) onGestureProgress(0);
+      }, 160);
     } else {
       setDx(0);
+      if (onGestureProgress) onGestureProgress(0);
     }
   };
   const clickCapture = (e) => {
@@ -741,12 +817,12 @@ function SearchScreen({ q, setQ, places, now, premium, onOpenPlace, onOpenCatego
 }
 
 /* ------------------------------- category ------------------------------ */
-function CategoryScreen({ cat, clips, placeById, now, onBack, onOpenClip, onSearch, onBell }) {
+function CategoryScreen({ cat, clips, placeById, now, onBack, onOpenClip, onSearch, onBell, onGestureProgress }) {
   const list = clips.filter((c) => c.status === "live" && (c.cat === cat.id || (c.autoCats || []).includes(cat.id))).sort((a, b) => b.ts - a.ts);
   const ids = list.map((c) => c.id);
   const tint = cat.grad[0];
   return (
-    <SwipePage onBack={onBack}>
+    <SwipePage onBack={onBack} onGestureProgress={onGestureProgress}>
       <div className="page-scroll">
       <div className="cat-hero" style={{ background: `linear-gradient(160deg, ${cat.grad[0]}, ${cat.grad[1]})` }}>
         <div className="vibe-sweep" />
@@ -769,7 +845,7 @@ function CategoryScreen({ cat, clips, placeById, now, onBack, onOpenClip, onSear
 }
 
 /* --------------------------------- place ------------------------------- */
-function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenClip, onRecordHere, onSearch, onBell, premium }) {
+function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenClip, onRecordHere, onSearch, onBell, premium, onGestureProgress }) {
   const [showDirections, setShowDirections] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(() => {
     const seen = localStorage.getItem("placeOnboardingSeen");
@@ -790,7 +866,7 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
   const countLabel = recent > 0 ? `${recent} clip${recent === 1 ? "" : "s"} in the last 30 min` : `${list.length} clip${list.length === 1 ? "" : "s"} · newest first`;
   const tint = cat.grad[0];
   return (
-    <SwipePage onBack={onBack}>
+    <SwipePage onBack={onBack} onGestureProgress={onGestureProgress}>
       <div className="page-scroll">
       <div className="place-hero">
         <VibeGradient catId={place.cat} animated big />
@@ -919,7 +995,7 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
 /* ------------------------------ clip viewer ----------------------------- */
 /* Full-screen pager. Finger-tracked: drag up/down pages between clips,
    drag right exits back, drag left opens the clip's place. Tap = pause. */
-function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPlace, onReport, savedClips, setSavedClips }) {
+function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPlace, onReport, savedClips, setSavedClips, onGestureProgress }) {
   const live = useMemo(() => ids.map((id) => clipsById[id]).filter((c) => c && c.status === "live"), [ids, clipsById]);
   const [idx, setIdx] = useState(() => { const i = live.findIndex((c) => c.id === startId); return i < 0 ? 0 : i; });
   const [drag, setDrag] = useState({ x: 0, y: 0, anim: true });
@@ -954,6 +1030,11 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
     if (!s.axis && Math.hypot(dX, dY) > 8) s.axis = Math.abs(dX) > Math.abs(dY) ? "x" : "y";
     if (s.axis === "x") {
       setDrag({ x: dX * (dX < 0 ? 0.85 : 0.95), y: 0, anim: false });
+      if (onGestureProgress && dX > 0) {
+        const screenWidth = Math.min(430, window.innerWidth);
+        const progress = Math.min(1, dX / (screenWidth * 0.4));
+        onGestureProgress(progress);
+      }
     } else if (s.axis === "y") {
       const atEdge = (idx === 0 && dY > 0) || (idx === live.length - 1 && dY < 0);
       setDrag({ x: 0, y: dY * (atEdge ? 0.3 : 1), anim: false });
@@ -966,6 +1047,7 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
     if (s.axis) suppress.current = true;
     if (!s.axis) {
       setDrag({ x: 0, y: 0, anim: true });
+      if (onGestureProgress) onGestureProgress(0);
       const onButton = e.target.closest && e.target.closest("button");
       if (dt < 300 && !onButton) {
         const v = videoRef.current;
@@ -976,25 +1058,29 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
     }
     if (s.axis === "x") {
       if (dX > 90 || (dX > 40 && s.vx > 0.55)) {
+        if (onGestureProgress) onGestureProgress(1);
         setLeaving("back");
         setDrag({ x: window.innerWidth || 480, y: 0, anim: true });
-        setTimeout(onBack, 240);
+        setTimeout(() => { if (onGestureProgress) onGestureProgress(0); onBack(); }, 240);
       } else if (dX < -90 || (dX < -40 && s.vx < -0.55)) {
+        if (onGestureProgress) onGestureProgress(0);
         setLeaving("place");
         const pid = cur.placeId;
         onOpenPlace(pid);
         setDrag({ x: -(window.innerWidth || 480), y: 0, anim: true });
       } else {
+        if (onGestureProgress) onGestureProgress(0);
         setDrag({ x: 0, y: 0, anim: true });
       }
       return;
     }
+    if (onGestureProgress) onGestureProgress(0);
     const h = s.h || 700;
     if ((dY < -h * 0.16 || (dY < -30 && s.vy < -0.5)) && idx < live.length - 1) setIdx((i) => i + 1);
     else if ((dY > h * 0.16 || (dY > 30 && s.vy > 0.5)) && idx > 0) setIdx((i) => i - 1);
     setDrag({ x: 0, y: 0, anim: true });
   };
-  const cancel = () => { if (g.current) { g.current = null; setDrag({ x: 0, y: 0, anim: true }); } };
+  const cancel = () => { if (g.current) { g.current = null; if (onGestureProgress) onGestureProgress(0); setDrag({ x: 0, y: 0, anim: true }); } };
   const clickCapture = (e) => {
     if (suppress.current) { e.stopPropagation(); e.preventDefault(); suppress.current = false; }
   };
@@ -1893,6 +1979,42 @@ const SEED_SEARCHES = [
   { id: "s3", type: "query", q: "LIV" },
 ];
 
+/* ========================= screen layer component ======================= */
+function ScreenLayer({ screen, isBackground, progress, children, style = {} }) {
+  const screenWidth = Math.min(430, window.innerWidth);
+  let transform = "translateX(0)";
+  let opacity = 1;
+  let zIndex = 1;
+
+  if (isBackground) {
+    const parallaxAmount = -screenWidth * 0.25 * (1 - progress);
+    transform = `translateX(${parallaxAmount}px)`;
+    const dimAmount = (1 - progress) * 0.15;
+    opacity = 1 - dimAmount;
+    zIndex = 0;
+  } else {
+    transform = `translateX(${screenWidth * progress}px)`;
+    zIndex = 2;
+  }
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        transform,
+        opacity,
+        zIndex,
+        pointerEvents: progress > 0.02 && !isBackground ? "none" : "auto",
+        willChange: "transform, opacity",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function App() {
   const startRef = useRef(Date.now());
   const buildPlaceById = (arr) => Object.fromEntries(arr.map((p) => [p.id, p]));
@@ -1937,6 +2059,7 @@ export default function App() {
   const [showOnboardingTip, setShowOnboardingTip] = useState(() => !localStorage.getItem("outside-onboarded"));
   const [swipeStartX, setSwipeStartX] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [gestureProgress, setGestureProgress] = useState(0);
   const screenHistory = useRef(["home"]);
 
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(t); }, []);
@@ -2149,7 +2272,12 @@ export default function App() {
       <div className="phone" onPointerDown={onPhoneDown} onPointerUp={onPhoneUp} onClickCapture={onPhoneClickCapture}>
         <TopBar dotColor={FALLBACK} onSearch={openSearch} onBell={openBell} />
 
-        <main className="content" ref={contentRef}>
+        <main className="content" ref={contentRef} style={{
+          transform: (activeCat || activePlace || clipId) && gestureProgress > 0 ? `translateX(${-Math.min(430, window.innerWidth) * 0.25 * (1 - gestureProgress)}px)` : "none",
+          opacity: (activeCat || activePlace || clipId) && gestureProgress > 0 ? 1 - (0.15 * gestureProgress) : 1,
+          transition: "none",
+          willChange: (activeCat || activePlace || clipId) ? "transform, opacity" : "auto",
+        }}>
           {screen === "home" && (
             <HomeScreen feed={feed} interestCats={interestCats} savedPlaces={savedPlaces} placeById={placeById} now={now}
               onOpenClip={openClip} filter={homeFilter} setFilter={setHomeFilter}
@@ -2177,20 +2305,33 @@ export default function App() {
         </main>
 
         {reviewOpen && <ReviewScreen clips={clips} placeById={placeById} now={now} onBack={() => setReviewOpen(false)} onClear={clearClip} onRemove={removeClip} />}
-        {activeCat && !clipId && (
-          <CategoryScreen cat={activeCat} clips={clips} placeById={placeById} now={now}
-            onBack={() => setCatId(null)} onOpenClip={openClip} onSearch={openSearch} onBell={openBell} />
-        )}
-        {activePlace && !clipId && (
-          <PlaceScreen place={activePlace} clips={clips} now={now} saved={savedIds.has(activePlace.id)}
-            onToggleSave={() => togglePlace(activePlace.id)} onBack={() => { if (previousClipId) { setClipId(previousClipId); } setPreviousClipId(null); setPlaceId(null); }}
-            onOpenClip={openClip} onRecordHere={() => openRecord(activePlace.id)}
-            onSearch={openSearch} onBell={openBell} premium={premiumActive} />
-        )}
-        {clipId && (
-          <ClipViewer clipsById={clipsById} placeById={placeById} ids={viewerIds} startId={clipId} now={now}
-            onBack={() => setClipId(null)} onOpenPlace={openPlace} onReport={reportClip}
-            savedClips={savedClips} setSavedClips={setSavedClips} />
+        {(activeCat || activePlace || clipId) && (
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 10,
+            pointerEvents: clipId || activePlace || activeCat ? "auto" : "none",
+            boxShadow: gestureProgress > 0 ? `inset 24px 0 60px rgba(0,0,0,${0.3 * gestureProgress})` : "none",
+            willChange: "box-shadow",
+          }}>
+            {activeCat && !clipId && (
+              <CategoryScreen cat={activeCat} clips={clips} placeById={placeById} now={now}
+                onBack={() => { setGestureProgress(0); setCatId(null); }} onOpenClip={openClip} onSearch={openSearch} onBell={openBell} />
+            )}
+            {activePlace && !clipId && (
+              <PlaceScreen place={activePlace} clips={clips} now={now} saved={savedIds.has(activePlace.id)}
+                onToggleSave={() => togglePlace(activePlace.id)} onBack={() => { if (previousClipId) { setClipId(previousClipId); } setPreviousClipId(null); setPlaceId(null); }}
+                onOpenClip={openClip} onRecordHere={() => openRecord(activePlace.id)}
+                onSearch={openSearch} onBell={openBell} premium={premiumActive}
+                onGestureProgress={setGestureProgress} />
+            )}
+            {clipId && (
+              <ClipViewer clipsById={clipsById} placeById={placeById} ids={viewerIds} startId={clipId} now={now}
+                onBack={() => { setGestureProgress(0); setClipId(null); }} onOpenPlace={openPlace} onReport={reportClip}
+                savedClips={savedClips} setSavedClips={setSavedClips}
+                onGestureProgress={setGestureProgress} />
+            )}
+          </div>
         )}
 
         <RecordModal open={recOpen} onClose={() => setRecOpen(false)} presetPlaceId={recPreset} placeById={placeById}
