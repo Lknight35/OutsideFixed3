@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback, createContext, useContext } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   Home, Search, Bookmark, BookmarkCheck, Video, X, ArrowLeft, MapPin,
   Square, RotateCcw, Plus, Check, AlertTriangle, Ban, Clock, Flag,
@@ -13,68 +13,6 @@ import {
    comments / DMs / maps / heatmaps / camera-roll uploads. Newest first.
    ========================================================================= */
 
-/* ========================= navigation stack context ===================== */
-const NavigationContext = createContext(null);
-function useNavigation() { return useContext(NavigationContext); }
-
-function NavigationProvider({ children }) {
-  const [stack, setStack] = useState([]);
-  const [gestureProgress, setGestureProgress] = useState(0);
-  const [isGestureActive, setIsGestureActive] = useState(false);
-  const gestureStartRef = useRef(null);
-
-  const push = useCallback((screen) => {
-    setStack(prev => [...prev, screen]);
-  }, []);
-
-  const pop = useCallback(() => {
-    setStack(prev => prev.slice(0, -1));
-  }, []);
-
-  const handleGestureStart = useCallback((x) => {
-    if (stack.length <= 1) return;
-    gestureStartRef.current = { startX: x, startTime: Date.now() };
-    setIsGestureActive(true);
-  }, [stack.length]);
-
-  const handleGestureMove = useCallback((x) => {
-    if (!gestureStartRef.current || !isGestureActive) return;
-    const dx = x - gestureStartRef.current.startX;
-    const screenWidth = Math.min(430, window.innerWidth);
-    const progress = Math.max(0, Math.min(1, dx / (screenWidth * 0.4)));
-    setGestureProgress(progress);
-  }, [isGestureActive]);
-
-  const handleGestureEnd = useCallback((x) => {
-    if (!gestureStartRef.current) return;
-    const dx = x - gestureStartRef.current.startX;
-    const dt = Date.now() - gestureStartRef.current.startTime;
-    const velocity = Math.abs(dx) / dt;
-    const screenWidth = Math.min(430, window.innerWidth);
-    const progress = Math.max(0, Math.min(1, dx / (screenWidth * 0.4)));
-    const shouldDismiss = progress > 0.35 || (velocity > 1 && dx > 30);
-
-    if (shouldDismiss && stack.length > 1) {
-      setGestureProgress(1);
-      setTimeout(() => {
-        pop();
-        setGestureProgress(0);
-        setIsGestureActive(false);
-        gestureStartRef.current = null;
-      }, 160);
-    } else {
-      setGestureProgress(0);
-      setIsGestureActive(false);
-      gestureStartRef.current = null;
-    }
-  }, [stack.length, pop]);
-
-  return (
-    <NavigationContext.Provider value={{ stack, push, pop, gestureProgress, isGestureActive, handleGestureStart, handleGestureMove, handleGestureEnd }}>
-      {children}
-    </NavigationContext.Provider>
-  );
-}
 
 /* ----------------------------- categories ------------------------------ */
 const CATEGORIES = [
@@ -468,6 +406,7 @@ function SwipePage({ onBack, children, onGestureProgress }) {
   const down = (e) => {
     if (leavingRef.current) return;
     if (e.target.closest && e.target.closest(".no-swipe")) return;
+    if (e.clientX > 30) return;
     g.current = { x: e.clientX, y: e.clientY, lx: e.clientX, lt: Date.now(), vx: 0, locked: null };
     setAnim(false);
   };
@@ -1979,41 +1918,6 @@ const SEED_SEARCHES = [
   { id: "s3", type: "query", q: "LIV" },
 ];
 
-/* ========================= screen layer component ======================= */
-function ScreenLayer({ screen, isBackground, progress, children, style = {} }) {
-  const screenWidth = Math.min(430, window.innerWidth);
-  let transform = "translateX(0)";
-  let opacity = 1;
-  let zIndex = 1;
-
-  if (isBackground) {
-    const parallaxAmount = -screenWidth * 0.25 * (1 - progress);
-    transform = `translateX(${parallaxAmount}px)`;
-    const dimAmount = (1 - progress) * 0.15;
-    opacity = 1 - dimAmount;
-    zIndex = 0;
-  } else {
-    transform = `translateX(${screenWidth * progress}px)`;
-    zIndex = 2;
-  }
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        transform,
-        opacity,
-        zIndex,
-        pointerEvents: progress > 0.02 && !isBackground ? "none" : "auto",
-        willChange: "transform, opacity",
-        ...style,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
 
 export default function App() {
   const startRef = useRef(Date.now());
@@ -2273,7 +2177,7 @@ export default function App() {
         <TopBar dotColor={FALLBACK} onSearch={openSearch} onBell={openBell} />
 
         <main className="content" ref={contentRef} style={{
-          transform: (activeCat || activePlace || clipId) && gestureProgress > 0 ? `translateX(${-Math.min(430, window.innerWidth) * 0.25 * (1 - gestureProgress)}px)` : "none",
+          transform: (activeCat || activePlace || clipId) && gestureProgress > 0 ? `translateX(${-Math.min(430, window.innerWidth) * 0.25 * gestureProgress}px)` : "none",
           opacity: (activeCat || activePlace || clipId) && gestureProgress > 0 ? 1 - (0.15 * gestureProgress) : 1,
           transition: "none",
           willChange: (activeCat || activePlace || clipId) ? "transform, opacity" : "auto",
