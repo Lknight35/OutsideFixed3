@@ -807,7 +807,7 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
                 <MapPin size={20} strokeWidth={2} />
               </button>
               <button className={"icon-btn" + (saved ? " on" : "")} onClick={onToggleSave} title={saved ? "Saved" : "Save place"} style={{ color: mixWhite(tint, 0.6) }}>
-                {saved ? <BookmarkCheck size={20} strokeWidth={2} /> : <Bookmark size={20} strokeWidth={2} />}
+                <Bookmark size={20} strokeWidth={2} fill={saved ? "currentColor" : "none"} />
               </button>
             </div>
           </div>
