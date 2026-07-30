@@ -2210,14 +2210,25 @@ export default function App() {
 
         {reviewOpen && <ReviewScreen clips={clips} placeById={placeById} now={now} onBack={() => setReviewOpen(false)} onClear={clearClip} onRemove={removeClip} />}
         {(activeCat || activePlace || clipId) && (
-          <div style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 10,
-            pointerEvents: clipId || activePlace || activeCat ? "auto" : "none",
-            boxShadow: gestureProgress > 0 ? `inset 24px 0 60px rgba(0,0,0,${0.3 * gestureProgress})` : "none",
-            willChange: "box-shadow",
-          }}>
+          <>
+            {gestureProgress > 0 && (
+              <div style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 9,
+                pointerEvents: "none",
+                backgroundColor: `rgba(0,0,0,${Math.min(0.15, gestureProgress * 0.18)})`,
+                willChange: "background-color",
+              }} />
+            )}
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 10,
+              pointerEvents: clipId || activePlace || activeCat ? "auto" : "none",
+              boxShadow: gestureProgress > 0 ? `inset 24px 0 60px rgba(0,0,0,${0.3 * gestureProgress})` : "none",
+              willChange: "box-shadow",
+            }}>
             {activeCat && !clipId && (
               <CategoryScreen cat={activeCat} clips={clips} placeById={placeById} now={now}
                 onBack={() => { setGestureProgress(0); setCatId(null); }} onOpenClip={openClip} onSearch={openSearch} onBell={openBell} />
@@ -2235,7 +2246,8 @@ export default function App() {
                 savedClips={savedClips} setSavedClips={setSavedClips}
                 onGestureProgress={setGestureProgress} />
             )}
-          </div>
+            </div>
+          </>
         )}
 
         <RecordModal open={recOpen} onClose={() => setRecOpen(false)} presetPlaceId={recPreset} placeById={placeById}
