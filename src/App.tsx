@@ -1922,6 +1922,7 @@ export default function App() {
   const [clipId, setClipId] = useState(null);
   const [viewerIds, setViewerIds] = useState([]);
   const [previousClipId, setPreviousClipId] = useState(null);
+  const [transitionState, setTransitionState] = useState(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [homeFilter, setHomeFilter] = useState("all");
@@ -2036,9 +2037,9 @@ export default function App() {
     showToast("Added to your places");
   };
 
-  const openPlace = (id) => { setPreviousClipId(clipId || null); setClipId(null); setCatId(null); setPlaceId(id); };
+  const openPlace = (id) => { setPreviousClipId(clipId || null); setCatId(null); setPlaceId(id); };
   const openCategory = (id) => { setClipId(null); setPlaceId(null); setCatId(id); };
-  const openClip = (id, ids) => { setViewerIds(ids && ids.length ? ids : [id]); setClipId(id); };
+  const openClip = (id, ids) => { setViewerIds(ids && ids.length ? ids : [id]); setClipId(id); setTransitionState(null); };
   const gotoScreen = (s) => { setScreen(s); setPlaceId(null); setCatId(null); setClipId(null); setReviewOpen(false); setBellOpen(false); };
   const openSearch = () => gotoScreen("search");
   const openBell = () => setBellOpen(true);
@@ -2181,15 +2182,17 @@ export default function App() {
           <CategoryScreen cat={activeCat} clips={clips} placeById={placeById} now={now}
             onBack={() => setCatId(null)} onOpenClip={openClip} onSearch={openSearch} onBell={openBell} />
         )}
-        {activePlace && !clipId && (
-          <PlaceScreen place={activePlace} clips={clips} now={now} saved={savedIds.has(activePlace.id)}
-            onToggleSave={() => togglePlace(activePlace.id)} onBack={() => { if (previousClipId) { setClipId(previousClipId); } setPreviousClipId(null); setPlaceId(null); }}
-            onOpenClip={openClip} onRecordHere={() => openRecord(activePlace.id)}
-            onSearch={openSearch} onBell={openBell} premium={premiumActive} />
+        {activePlace && (!clipId || transitionState) && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 46, transform: transitionState === "to-place" ? "translateX(0)" : "translateX(100%)", transition: transitionState ? "transform .34s cubic-bezier(.32,.72,0,1)" : "none", pointerEvents: transitionState === "to-place" ? "auto" : "none" }}>
+            <PlaceScreen place={activePlace} clips={clips} now={now} saved={savedIds.has(activePlace.id)}
+              onToggleSave={() => togglePlace(activePlace.id)} onBack={() => { if (previousClipId) { setTransitionState("to-clip"); setTimeout(() => { setClipId(previousClipId); setPlaceId(null); setPreviousClipId(null); setTransitionState(null); }, 340); } else { setPlaceId(null); setTransitionState(null); } }}
+              onOpenClip={openClip} onRecordHere={() => openRecord(activePlace.id)}
+              onSearch={openSearch} onBell={openBell} premium={premiumActive} />
+          </div>
         )}
         {clipId && (
           <ClipViewer clipsById={clipsById} placeById={placeById} ids={viewerIds} startId={clipId} now={now}
-            onBack={() => setClipId(null)} onOpenPlace={openPlace} onReport={reportClip}
+            onBack={() => placeId ? (setTransitionState("to-place"), setTimeout(() => { setClipId(null); setTransitionState(null); }, 340)) : setClipId(null)} onOpenPlace={(id) => { setTransitionState("to-place"); openPlace(id); }} onReport={reportClip}
             savedClips={savedClips} setSavedClips={setSavedClips} />
         )}
 
