@@ -2206,7 +2206,7 @@ export default function App() {
 
         {renewedFlash && <PremiumRenewedFlash onDone={() => setRenewedFlash(false)} />}
 
-        <BottomNav screen={screen} accent={accent} tinted={tinted} setScreen={gotoScreen} onRecord={() => openRecord(null)} />
+        {!recOpen && !clipId && <BottomNav screen={screen} accent={accent} tinted={tinted} setScreen={gotoScreen} onRecord={() => openRecord(null)} />}
 
         {toast && <div className="toast">{toast}</div>}
       </div>
