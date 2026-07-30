@@ -770,6 +770,7 @@ function CategoryScreen({ cat, clips, placeById, now, onBack, onOpenClip, onSear
 
 /* --------------------------------- place ------------------------------- */
 function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenClip, onRecordHere, onSearch, onBell, premium }) {
+  const [showDirections, setShowDirections] = useState(false);
   const cat = catById[place.cat];
   const list = clips.filter((c) => c.status === "live" && c.placeId === place.id).sort((a, b) => b.ts - a.ts);
   const ids = list.map((c) => c.id);
@@ -803,22 +804,30 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
           {saved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />} {saved ? "Saved to your places" : "Save this place"}
         </button>
 
-        <div className="nav-apps-row">
-          <button className="nav-app-btn" onClick={() => {
-            const query = encodeURIComponent(`${place.name} ${place.city}`);
-            window.open(`https://maps.google.com/maps/search/${query}`, '_blank');
-          }} title="Open in Google Maps"><Globe size={16} /> Maps</button>
-          <button className="nav-app-btn" onClick={() => {
-            const query = encodeURIComponent(`${place.name} ${place.city}`);
-            window.open(`https://waze.com/ul?q=${query}`, '_blank');
-          }} title="Open in Waze"><ChevronRight size={16} /> Waze</button>
-          <button className="nav-app-btn" onClick={() => {
-            const query = encodeURIComponent(`${place.name} ${place.city}`);
-            const mapsUrl = `maps://maps.apple.com/?q=${query}`;
-            window.location.href = mapsUrl;
-            setTimeout(() => { window.open(`https://maps.apple.com/?q=${query}`, '_blank'); }, 500);
-          }} title="Open in Apple Maps"><MapPin size={16} /> Apple Maps</button>
-        </div>
+        <button className="nav-app-btn" style={{ width: "100%", justifyContent: "center" }} onClick={() => setShowDirections(!showDirections)}>
+          <MapPin size={16} /> Directions
+        </button>
+        {showDirections && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+            <button className="nav-app-btn" onClick={() => {
+              const query = encodeURIComponent(`${place.name} ${place.city}`);
+              window.open(`https://maps.google.com/maps/search/${query}`, '_blank');
+              setShowDirections(false);
+            }} title="Open in Google Maps"><Globe size={16} /> Google Maps</button>
+            <button className="nav-app-btn" onClick={() => {
+              const query = encodeURIComponent(`${place.name} ${place.city}`);
+              window.open(`https://waze.com/ul?q=${query}`, '_blank');
+              setShowDirections(false);
+            }} title="Open in Waze"><ChevronRight size={16} /> Waze</button>
+            <button className="nav-app-btn" onClick={() => {
+              const query = encodeURIComponent(`${place.name} ${place.city}`);
+              const mapsUrl = `maps://maps.apple.com/?q=${query}`;
+              window.location.href = mapsUrl;
+              setTimeout(() => { window.open(`https://maps.apple.com/?q=${query}`, '_blank'); }, 500);
+              setShowDirections(false);
+            }} title="Open in Apple Maps"><MapPin size={16} /> Apple Maps</button>
+          </div>
+        )}
 
         {premium && (
           <div className="smart-line">
