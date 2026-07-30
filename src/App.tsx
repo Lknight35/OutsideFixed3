@@ -981,9 +981,9 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
         setTimeout(onBack, 240);
       } else if (dX < -90 || (dX < -40 && s.vx < -0.55)) {
         setLeaving("place");
-        setDrag({ x: -(window.innerWidth || 480) * 0.4, y: 0, anim: true });
         const pid = cur.placeId;
-        setTimeout(() => onOpenPlace(pid), 210);
+        onOpenPlace(pid);
+        setDrag({ x: -(window.innerWidth || 480), y: 0, anim: true });
       } else {
         setDrag({ x: 0, y: 0, anim: true });
       }
@@ -1001,7 +1001,7 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
 
   if (!cur) return null;
   const around = [idx - 1, idx, idx + 1].filter((i) => i >= 0 && i < live.length);
-  const fade = leaving === "back" ? 0.15 : leaving === "place" ? 0.35 : 1 - Math.min(Math.abs(drag.x) / 1100, 0.25);
+  const fade = leaving === "back" ? 0.15 : leaving === "place" ? 1 : 1 - Math.min(Math.abs(drag.x) / 1100, 0.25);
   const reasons = ["Inappropriate", "Not this place", "Spam", "Violence or danger", "Other"];
   const isSaved = savedClips.some((sc) => sc.id === cur.id);
   const toggleSaveClip = () => {
