@@ -426,8 +426,8 @@ function SwipePage({ onBack, children }) {
     if (s.locked === "x" && dx > 8) suppress.current = true;
     if (s.locked === "x" && (dx > 100 || (dx > 44 && s.vx > 0.55))) {
       leavingRef.current = true;
+      onBack();
       setDx(window.innerWidth || 480);
-      setTimeout(onBack, 240);
     } else {
       setDx(0);
     }
