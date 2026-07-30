@@ -788,7 +788,15 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
           <span className="hero-kick mono" style={{ color: mixWhite(tint, 0.45) }}>
             <MapPin size={13} strokeWidth={2.4} /> {locLabel(place).toUpperCase()}
           </span>
-          <h2 className="place-title">{place.name}</h2>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+            <button className="icon-btn" onClick={() => setShowDirections(true)} title="Get directions" style={{ color: mixWhite(tint, 0.6) }}>
+              <MapPin size={20} strokeWidth={2} />
+            </button>
+            <h2 className="place-title" style={{ flex: 1, margin: 0 }}>{place.name}</h2>
+            <button className={"icon-btn" + (saved ? " on" : "")} onClick={onToggleSave} title={saved ? "Saved" : "Save place"} style={{ color: mixWhite(tint, 0.6) }}>
+              {saved ? <BookmarkCheck size={20} strokeWidth={2} /> : <Bookmark size={20} strokeWidth={2} />}
+            </button>
+          </div>
           <div className="hero-meta">
             <CatPill catId={place.cat} />
             <span className="hero-count">{countLabel}</span>
@@ -800,34 +808,6 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
         <button className="btn-record-here press" style={{ background: tint, boxShadow: `0 10px 30px ${hexToRgba(tint, 0.35)}` }} onClick={onRecordHere}>
           <Video size={18} strokeWidth={2.3} /> Record here
         </button>
-        <button className={"place-savebar press" + (saved ? " on" : "")} onClick={onToggleSave}>
-          {saved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />} {saved ? "Saved to your places" : "Save this place"}
-        </button>
-
-        <button className="nav-app-btn" style={{ width: "100%", justifyContent: "center" }} onClick={() => setShowDirections(!showDirections)}>
-          <MapPin size={16} /> Directions
-        </button>
-        {showDirections && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
-            <button className="nav-app-btn" onClick={() => {
-              const query = encodeURIComponent(`${place.name} ${place.city}`);
-              window.open(`https://maps.google.com/maps/search/${query}`, '_blank');
-              setShowDirections(false);
-            }} title="Open in Google Maps"><Globe size={16} /> Google Maps</button>
-            <button className="nav-app-btn" onClick={() => {
-              const query = encodeURIComponent(`${place.name} ${place.city}`);
-              window.open(`https://waze.com/ul?q=${query}`, '_blank');
-              setShowDirections(false);
-            }} title="Open in Waze"><ChevronRight size={16} /> Waze</button>
-            <button className="nav-app-btn" onClick={() => {
-              const query = encodeURIComponent(`${place.name} ${place.city}`);
-              const mapsUrl = `maps://maps.apple.com/?q=${query}`;
-              window.location.href = mapsUrl;
-              setTimeout(() => { window.open(`https://maps.apple.com/?q=${query}`, '_blank'); }, 500);
-              setShowDirections(false);
-            }} title="Open in Apple Maps"><MapPin size={16} /> Apple Maps</button>
-          </div>
-        )}
 
         {premium && (
           <div className="smart-line">
@@ -859,6 +839,33 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
         </div>
       </div>
       </div>
+      {showDirections && (
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "flex-end", zIndex: 1000 }} onClick={() => setShowDirections(false)}>
+          <div style={{ width: "100%", backgroundColor: "#1a1a1f", borderRadius: "20px 20px 0 0", padding: "24px", display: "flex", flexDirection: "column", gap: "12px" }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 16px 0", textAlign: "center", fontSize: "18px", fontWeight: 600 }}>Directions</h3>
+            <button className="nav-app-btn" onClick={() => {
+              const query = encodeURIComponent(`${place.name} ${place.city}`);
+              window.open(`https://maps.google.com/maps/search/${query}`, '_blank');
+              setShowDirections(false);
+            }} title="Open in Google Maps" style={{ width: "100%", justifyContent: "center" }}><Globe size={18} /> Google Maps</button>
+            <button className="nav-app-btn" onClick={() => {
+              const query = encodeURIComponent(`${place.name} ${place.city}`);
+              window.open(`https://waze.com/ul?q=${query}`, '_blank');
+              setShowDirections(false);
+            }} title="Open in Waze" style={{ width: "100%", justifyContent: "center" }}><ChevronRight size={18} /> Waze</button>
+            <button className="nav-app-btn" onClick={() => {
+              const query = encodeURIComponent(`${place.name} ${place.city}`);
+              const mapsUrl = `maps://maps.apple.com/?q=${query}`;
+              window.location.href = mapsUrl;
+              setTimeout(() => { window.open(`https://maps.apple.com/?q=${query}`, '_blank'); }, 500);
+              setShowDirections(false);
+            }} title="Open in Apple Maps" style={{ width: "100%", justifyContent: "center" }}><MapPin size={18} /> Apple Maps</button>
+            <button className="nav-app-btn" style={{ width: "100%", justifyContent: "center", marginTop: "8px" }} title="Connect other apps">
+              <Plus size={18} /> Other apps
+            </button>
+          </div>
+        </div>
+      )}
     </SwipePage>
   );
 }
