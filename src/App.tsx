@@ -1921,6 +1921,7 @@ export default function App() {
   const [catId, setCatId] = useState(null);
   const [clipId, setClipId] = useState(null);
   const [viewerIds, setViewerIds] = useState([]);
+  const [previousClipId, setPreviousClipId] = useState(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [homeFilter, setHomeFilter] = useState("all");
@@ -2035,7 +2036,7 @@ export default function App() {
     showToast("Added to your places");
   };
 
-  const openPlace = (id) => { setClipId(null); setCatId(null); setPlaceId(id); };
+  const openPlace = (id) => { setPreviousClipId(clipId || null); setClipId(null); setCatId(null); setPlaceId(id); };
   const openCategory = (id) => { setClipId(null); setPlaceId(null); setCatId(id); };
   const openClip = (id, ids) => { setViewerIds(ids && ids.length ? ids : [id]); setClipId(id); };
   const gotoScreen = (s) => { setScreen(s); setPlaceId(null); setCatId(null); setClipId(null); setReviewOpen(false); setBellOpen(false); };
@@ -2182,7 +2183,7 @@ export default function App() {
         )}
         {activePlace && !clipId && (
           <PlaceScreen place={activePlace} clips={clips} now={now} saved={savedIds.has(activePlace.id)}
-            onToggleSave={() => togglePlace(activePlace.id)} onBack={() => setPlaceId(null)}
+            onToggleSave={() => togglePlace(activePlace.id)} onBack={() => { if (previousClipId) { setClipId(previousClipId); } setPreviousClipId(null); setPlaceId(null); }}
             onOpenClip={openClip} onRecordHere={() => openRecord(activePlace.id)}
             onSearch={openSearch} onBell={openBell} premium={premiumActive} />
         )}
@@ -2403,7 +2404,7 @@ const CSS = `
 .v-media{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
 .v-scrim{position:absolute; inset:0; z-index:1; pointer-events:none;
   background:linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,0) 34%), linear-gradient(to bottom, rgba(0,0,0,.42) 0%, rgba(0,0,0,0) 18%);}
-.v-info{position:absolute; left:16px; right:80px; bottom:26px; z-index:3; display:flex; flex-direction:column; align-items:flex-start; gap:9px;}
+.v-info{position:absolute; left:16px; right:80px; bottom:120px; z-index:3; display:flex; flex-direction:column; align-items:flex-start; gap:9px;}
 .v-cat{display:inline-flex; align-items:center; gap:5px; padding:6px 11px 6px 9px; border-radius:999px; color:#fff; font-size:11px; font-weight:600; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);}
 .v-place{display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left;}
 .v-name{font-size:19px; font-weight:800; letter-spacing:-.025em; color:#fff; text-shadow:0 1px 10px rgba(0,0,0,.4);}
