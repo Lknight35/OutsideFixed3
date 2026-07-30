@@ -2414,7 +2414,7 @@ const CSS = `
 .v-chrome button{pointer-events:auto;}
 .v-counter{padding:6px 11px; border-radius:999px; background:rgba(0,0,0,.35); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); color:#fff; font-size:12px; font-weight:600;}
 .v-chrome-right{display:flex; gap:8px;}
-.v-hint{position:absolute; bottom:112px; left:50%; transform:translateX(-50%); z-index:6; padding:8px 14px; border-radius:999px;
+.v-hint{position:absolute; bottom:145px; left:50%; transform:translateX(-50%); z-index:6; padding:8px 14px; border-radius:999px;
   background:rgba(0,0,0,.45); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); color:rgba(255,255,255,.85);
   font-size:11.5px; font-weight:600; white-space:nowrap; pointer-events:none; animation:fadeIn .3s ease;}
 
