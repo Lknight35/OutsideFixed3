@@ -2404,7 +2404,7 @@ const CSS = `
 .v-media{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
 .v-scrim{position:absolute; inset:0; z-index:1; pointer-events:none;
   background:linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,0) 34%), linear-gradient(to bottom, rgba(0,0,0,.42) 0%, rgba(0,0,0,0) 18%);}
-.v-info{position:absolute; left:16px; right:80px; bottom:70px; z-index:3; display:flex; flex-direction:column; align-items:flex-start; gap:9px;}
+.v-info{position:absolute; left:16px; right:80px; bottom:48px; z-index:3; display:flex; flex-direction:column; align-items:flex-start; gap:9px;}
 .v-cat{display:inline-flex; align-items:center; gap:5px; padding:6px 11px 6px 9px; border-radius:999px; color:#fff; font-size:11px; font-weight:600; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);}
 .v-place{display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left;}
 .v-name{font-size:19px; font-weight:800; letter-spacing:-.025em; color:#fff; text-shadow:0 1px 10px rgba(0,0,0,.4);}
