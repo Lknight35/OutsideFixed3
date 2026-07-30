@@ -789,10 +789,10 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
             <MapPin size={13} strokeWidth={2.4} /> {locLabel(place).toUpperCase()}
           </span>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+            <h2 className="place-title" style={{ flex: 1, margin: 0 }}>{place.name}</h2>
             <button className="icon-btn" onClick={() => setShowDirections(true)} title="Get directions" style={{ color: mixWhite(tint, 0.6) }}>
               <MapPin size={20} strokeWidth={2} />
             </button>
-            <h2 className="place-title" style={{ flex: 1, margin: 0 }}>{place.name}</h2>
             <button className={"icon-btn" + (saved ? " on" : "")} onClick={onToggleSave} title={saved ? "Saved" : "Save place"} style={{ color: mixWhite(tint, 0.6) }}>
               {saved ? <BookmarkCheck size={20} strokeWidth={2} /> : <Bookmark size={20} strokeWidth={2} />}
             </button>
