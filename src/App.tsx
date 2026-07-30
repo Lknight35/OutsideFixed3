@@ -2193,10 +2193,12 @@ export default function App() {
             )}
             {activePlace && (
               <div style={{ position: "absolute", inset: 0, zIndex: 15, transform: clipId ? "translateX(100%)" : "translateX(0)", transition: clipId ? "transform .34s cubic-bezier(.32,.72,0,1)" : "none" }}>
-                <PlaceScreen place={activePlace} clips={clips} now={now} saved={savedIds.has(activePlace.id)}
-                  onToggleSave={() => togglePlace(activePlace.id)} onBack={() => { if (previousClipId && clipId) { setTransitionState("to-clip"); setTimeout(() => { setPlaceId(null); setPreviousClipId(null); setTransitionState(null); }, 340); } else { if (previousClipId) { setClipId(previousClipId); } setPreviousClipId(null); setPlaceId(null); } }}
-                  onOpenClip={openClip} onRecordHere={() => openRecord(activePlace.id)}
-                  onSearch={openSearch} onBell={openBell} premium={premiumActive} />
+                <SwipePage onBack={() => { if (previousClipId && clipId) { setTransitionState("to-clip"); setTimeout(() => { setPlaceId(null); setPreviousClipId(null); setTransitionState(null); }, 340); } else { if (previousClipId) { setClipId(previousClipId); } setPreviousClipId(null); setPlaceId(null); } }}>
+                  <PlaceScreen place={activePlace} clips={clips} now={now} saved={savedIds.has(activePlace.id)}
+                    onToggleSave={() => togglePlace(activePlace.id)} onBack={() => { if (previousClipId && clipId) { setTransitionState("to-clip"); setTimeout(() => { setPlaceId(null); setPreviousClipId(null); setTransitionState(null); }, 340); } else { if (previousClipId) { setClipId(previousClipId); } setPreviousClipId(null); setPlaceId(null); } }}
+                    onOpenClip={openClip} onRecordHere={() => openRecord(activePlace.id)}
+                    onSearch={openSearch} onBell={openBell} premium={premiumActive} />
+                </SwipePage>
               </div>
             )}
           </div>
