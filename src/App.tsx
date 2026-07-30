@@ -859,9 +859,11 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
             <h3 style={{ margin: "0 0 16px 0", textAlign: "center", fontSize: "18px", fontWeight: 600 }}>Directions</h3>
             <button className="nav-app-btn" onClick={() => {
               const query = encodeURIComponent(`${place.name} ${place.city}`);
-              window.open(`https://maps.google.com/maps/search/${query}`, '_blank');
+              const mapsUrl = `maps://maps.apple.com/?q=${query}`;
+              window.location.href = mapsUrl;
+              setTimeout(() => { window.open(`https://maps.apple.com/?q=${query}`, '_blank'); }, 500);
               setShowDirections(false);
-            }} title="Open in Google Maps" style={{ width: "100%", justifyContent: "center" }}><Globe size={18} /> Google Maps</button>
+            }} title="Open in Apple Maps" style={{ width: "100%", justifyContent: "center" }}><MapPin size={18} /> Maps</button>
             <button className="nav-app-btn" onClick={() => {
               const query = encodeURIComponent(`${place.name} ${place.city}`);
               window.open(`https://waze.com/ul?q=${query}`, '_blank');
@@ -869,11 +871,9 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
             }} title="Open in Waze" style={{ width: "100%", justifyContent: "center" }}><ChevronRight size={18} /> Waze</button>
             <button className="nav-app-btn" onClick={() => {
               const query = encodeURIComponent(`${place.name} ${place.city}`);
-              const mapsUrl = `maps://maps.apple.com/?q=${query}`;
-              window.location.href = mapsUrl;
-              setTimeout(() => { window.open(`https://maps.apple.com/?q=${query}`, '_blank'); }, 500);
+              window.open(`https://maps.google.com/maps/search/${query}`, '_blank');
               setShowDirections(false);
-            }} title="Open in Apple Maps" style={{ width: "100%", justifyContent: "center" }}><MapPin size={18} /> Apple Maps</button>
+            }} title="Open in Google Maps" style={{ width: "100%", justifyContent: "center" }}><Globe size={18} /> Google Maps</button>
             <button className="nav-app-btn" style={{ width: "100%", justifyContent: "center", marginTop: "8px" }} title="Connect other apps">
               <Plus size={18} /> Other apps
             </button>
