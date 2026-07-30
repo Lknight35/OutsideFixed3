@@ -771,6 +771,17 @@ function CategoryScreen({ cat, clips, placeById, now, onBack, onOpenClip, onSear
 /* --------------------------------- place ------------------------------- */
 function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenClip, onRecordHere, onSearch, onBell, premium }) {
   const [showDirections, setShowDirections] = useState(false);
+  const [showPlaceOnboarding, setShowPlaceOnboarding] = useState(() => {
+    const seen = localStorage.getItem("placeOnboardingSeen");
+    return !seen;
+  });
+  useEffect(() => {
+    if (showPlaceOnboarding) {
+      localStorage.setItem("placeOnboardingSeen", "true");
+      const timer = setTimeout(() => setShowPlaceOnboarding(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showPlaceOnboarding]);
   const cat = catById[place.cat];
   const list = clips.filter((c) => c.status === "live" && c.placeId === place.id).sort((a, b) => b.ts - a.ts);
   const ids = list.map((c) => c.id);
@@ -864,6 +875,23 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
               <Plus size={18} /> Other apps
             </button>
           </div>
+        </div>
+      )}
+      {showPlaceOnboarding && (
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.6)", zIndex: 999, display: "flex", flexDirection: "column", justifyContent: "flex-start", paddingTop: "140px" }} onClick={() => setShowPlaceOnboarding(false)}>
+          <div style={{ display: "flex", gap: "16px", paddingX: "16px", justifyContent: "center", pointerEvents: "none" }}>
+            <div style={{ textAlign: "center", color: "#fff" }}>
+              <div style={{ fontSize: "32px", marginBottom: "8px" }}>📌</div>
+              <p style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: 600 }}>Save places</p>
+              <p style={{ margin: 0, fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>Tap to save<br/>your favorites</p>
+            </div>
+            <div style={{ textAlign: "center", color: "#fff" }}>
+              <div style={{ fontSize: "32px", marginBottom: "8px" }}>🧭</div>
+              <p style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: 600 }}>Get directions</p>
+              <p style={{ margin: 0, fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>Tap to navigate<br/>with your app</p>
+            </div>
+          </div>
+          <button className="btn-ghost sm" onClick={() => setShowPlaceOnboarding(false)} style={{ margin: "24px auto 0", pointerEvents: "auto" }}>Got it</button>
         </div>
       )}
     </SwipePage>
