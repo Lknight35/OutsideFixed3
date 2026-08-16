@@ -1938,6 +1938,7 @@ export default function App() {
   const [myFilters, setMyFilters] = useState({ place: "all", cat: "all", date: "all" });
 
   const [screen, setScreen] = useState("home");
+  const [previousScreen, setPreviousScreen] = useState(null);
   const [placeId, setPlaceId] = useState(null);
   const [catId, setCatId] = useState(null);
   const [clipId, setClipId] = useState(null);
@@ -2058,10 +2059,41 @@ export default function App() {
     showToast("Added to your places");
   };
 
-  const openPlace = (id) => { setPreviousClipId(clipId || null); setClipId(null); setCatId(null); setPlaceId(id); };
-  const openCategory = (id) => { setClipId(null); setPlaceId(null); setCatId(id); };
+  const openPlace = (id) => { setPreviousClipId(clipId || null); setClipId(null); setCatId(null); setPreviousScreen(screen); setPlaceId(id); };
+  const openCategory = (id) => { setClipId(null); setPlaceId(null); setPreviousScreen(screen); setCatId(id); };
   const openClip = (id, ids) => { setViewerIds(ids && ids.length ? ids : [id]); setClipId(id); };
-  const gotoScreen = (s) => { setScreen(s); setPlaceId(null); setCatId(null); setClipId(null); setReviewOpen(false); setBellOpen(false); };
+  const gotoScreen = (s) => {
+    if (s === "home") {
+      setScreen("home");
+      setPlaceId(null);
+      setCatId(null);
+      setClipId(null);
+      setReviewOpen(false);
+      setBellOpen(false);
+      setPreviousScreen(null);
+    } else if (placeId || catId) {
+      // On a place/category page, clicking a menu item
+      if (screen === s && previousScreen) {
+        // Clicking the same menu item while on overlay: go back to overlay
+        setScreen(previousScreen);
+        setPreviousScreen(null);
+      } else {
+        // Clicking a different menu item: navigate to that menu and remember we came from overlay
+        setPreviousScreen(screen);
+        setScreen(s);
+        setClipId(null);
+        setReviewOpen(false);
+        setBellOpen(false);
+      }
+    } else {
+      // On a regular screen
+      setPreviousScreen(screen);
+      setScreen(s);
+      setClipId(null);
+      setReviewOpen(false);
+      setBellOpen(false);
+    }
+  };
   const openSearch = () => gotoScreen("search");
   const openBell = () => setBellOpen(true);
   const openRecord = (preset = null) => { setRecPreset(preset); setRecOpen(true); };
