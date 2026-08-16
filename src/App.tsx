@@ -2064,30 +2064,26 @@ export default function App() {
   const openClip = (id, ids) => { setViewerIds(ids && ids.length ? ids : [id]); setClipId(id); };
   const gotoScreen = (s) => {
     if (s === "home") {
-      setScreen("home");
-      setPlaceId(null);
-      setCatId(null);
-      setClipId(null);
-      setReviewOpen(false);
-      setBellOpen(false);
-      setPreviousScreen(null);
-    } else if (placeId || catId) {
-      // On a place/category page, clicking a menu item
-      if (screen === s && previousScreen) {
-        // Clicking the same menu item while on overlay: go back to overlay
-        setScreen(previousScreen);
-        setPreviousScreen(null);
-      } else {
-        // Clicking a different menu item: navigate to that menu and remember we came from overlay
-        setPreviousScreen(screen);
-        setScreen(s);
+      if (placeId || catId) {
+        // On a page and clicking home: close page and go to home
+        setScreen("home");
+        setPlaceId(null);
+        setCatId(null);
         setClipId(null);
         setReviewOpen(false);
         setBellOpen(false);
+        setPreviousScreen(null);
+      } else if (previousScreen && previousScreen !== "home") {
+        // On a menu (reached from a page) and clicking home: go back to page
+        setScreen(previousScreen);
+        setPreviousScreen(null);
+      } else {
+        // Already on home or no previous page
+        setScreen("home");
+        setPreviousScreen(null);
       }
     } else {
-      // On a regular screen
-      setPreviousScreen(screen);
+      // Clicking a non-home menu item
       setScreen(s);
       setClipId(null);
       setReviewOpen(false);
