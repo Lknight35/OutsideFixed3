@@ -365,16 +365,16 @@ function LocationSearch({ onPick, placeholder }) {
 }
 
 /* ------------------------- top bars (base + hero) ----------------------- */
-function TopBar({ dotColor, onSearch, onBell }) {
+function TopBar({ dotColor, onSearch, onBell, onStatusBarTap }) {
   return (
-    <header className="topbar">
+    <header className="topbar" onClick={onStatusBarTap}>
       <div className="brand">
         <span className="wordmark">outside</span>
         <span className="brand-dot" style={{ background: dotColor, boxShadow: `0 0 12px ${dotColor}` }} />
       </div>
       <div className="topbar-actions">
-        <button className="icon-btn ghost" onClick={onSearch} aria-label="Search"><Search size={19} strokeWidth={2.2} /></button>
-        <button className="icon-btn ghost" onClick={onBell} aria-label="Notifications"><Bell size={19} strokeWidth={2.2} /></button>
+        <button className="icon-btn ghost" onClick={(e) => { e.stopPropagation(); onSearch(); }} aria-label="Search"><Search size={19} strokeWidth={2.2} /></button>
+        <button className="icon-btn ghost" onClick={(e) => { e.stopPropagation(); onBell(); }} aria-label="Notifications"><Bell size={19} strokeWidth={2.2} /></button>
       </div>
     </header>
   );
@@ -834,7 +834,7 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
       </div>
 
       <div className="place-body">
-        <button className="btn-record-here press" style={{ background: tint, boxShadow: `0 10px 30px ${hexToRgba(tint, 0.35)}` }} onClick={onRecordHere}>
+        <button className="btn-record-here press" style={{ background: tint, boxShadow: `0 10px 30px ${hexToRgba(tint, 0.35)}`, marginTop: "-8px" }} onClick={onRecordHere}>
           <Video size={18} strokeWidth={2.3} /> Record here
         </button>
 
@@ -846,7 +846,6 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
 
         <div className="latest-head">
           <h3 className="latest-title">Latest clips</h3>
-          <span className="latest-sort">Newest first <ChevronDown size={14} strokeWidth={2.4} /></span>
         </div>
 
         {list.length === 0 ? (
@@ -1567,28 +1566,24 @@ function SavedScreen({ interests, savedPlaces, placeById, toggleCat, setScope, t
       <h2 className="page-title">Saved</h2>
       <p className="muted-line" style={{ marginTop: -4 }}>Your searches, your clips, your feed.</p>
 
-      <h4 className="sec-label">💜 Favorites</h4>
+      <h4 className="sec-label">❤️ Likes</h4>
       {savedClips.length === 0 ? (
-        <p className="muted-line">Heart videos you want to compare or review later.</p>
+        <p className="muted-line">Like videos and they'll show up here.</p>
       ) : (
         <div className="fgrid">
           {savedClips.map((c) => {
             const p = placeById[c.placeId];
             return (
-              <div key={c.id} className="fcard-container">
-                <button className="fcard press" onClick={() => onOpenClip(c.id, [c.id])} aria-label={`${c.name}`}>
-                  <span className="fcard-media">
-                    {c.thumb ? <img src={c.thumb} className="fcard-img" alt="" draggable={false} /> : <VibeGradient catId={c.cat} big />}
-                    <span className="fcard-shade" />
+              <button key={c.id} className="fcard press" onClick={() => onOpenClip(c.id, [c.id])} aria-label={`${p?.name || 'Somewhere'}`}>
+                <span className="fcard-media">
+                  {c.thumb ? <img src={c.thumb} className="fcard-img" alt="" draggable={false} /> : <VibeGradient catId={c.cat} big />}
+                  <span className="fcard-shade" />
+                  <span className="fcard-top">
+                    <span className="catpill"><CatIcon id={c.cat} size={12} /> {catById[c.cat].label}</span>
                   </span>
-                </button>
-                <div style={{ padding: "9px 12px", display: "flex", flexDirection: "column", gap: "3px" }}>
-                  <button className="fcard-name-btn" style={{color: "var(--text)", textAlign: "left"}}>{p?.name || "Somewhere"}</button>
-                  <button className="icon-btn glass" onClick={() => setSavedClips((sc) => sc.filter((s) => s.id !== c.id))} aria-label="Remove from favorites" style={{width: "fit-content", fontSize: "11px", color: "var(--muted)"}}>
-                    <Heart size={12} fill="#EC4899" color="#EC4899" /> Remove
-                  </button>
-                </div>
-              </div>
+                  <span className="fcard-name">{p?.name || "Somewhere"}</span>
+                </span>
+              </button>
             );
           })}
         </div>
@@ -2142,6 +2137,11 @@ export default function App() {
   const gStart = useRef(null);
   const phoneSuppress = useRef(false);
   const contentRef = useRef(null);
+  const handleStatusBarTap = useCallback(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, []);
   const overlayOpen = !!(placeId || catId || clipId || reviewOpen || recOpen || bellOpen);
   const onPhoneDown = (e) => {
     if (overlayOpen || (e.target.closest && e.target.closest(".no-swipe"))) { gStart.current = null; return; }
@@ -2174,7 +2174,7 @@ export default function App() {
     <div className="outside">
       <style>{CSS}</style>
       <div className="phone" onPointerDown={onPhoneDown} onPointerUp={onPhoneUp} onClickCapture={onPhoneClickCapture}>
-        <TopBar dotColor={FALLBACK} onSearch={openSearch} onBell={openBell} />
+        <TopBar dotColor={FALLBACK} onSearch={openSearch} onBell={openBell} onStatusBarTap={handleStatusBarTap} />
 
         <main className="content" ref={contentRef} style={{
           transform: (activeCat || activePlace || clipId) && gestureProgress > 0 ? `translateX(${-Math.min(430, window.innerWidth) * 0.25 * gestureProgress}px)` : "none",
@@ -2461,7 +2461,7 @@ const CSS = `
 .v-media{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
 .v-scrim{position:absolute; inset:0; z-index:1; pointer-events:none;
   background:linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,0) 34%), linear-gradient(to bottom, rgba(0,0,0,.42) 0%, rgba(0,0,0,0) 18%);}
-.v-info{position:absolute; left:16px; right:80px; bottom:48px; z-index:3; display:flex; flex-direction:column; align-items:flex-start; gap:9px;}
+.v-info{position:absolute; left:16px; right:80px; bottom:48px; z-index:3; display:flex; flex-direction:column; align-items:flex-start; gap:9px; max-height:200px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
 .v-cat{display:inline-flex; align-items:center; gap:5px; padding:6px 11px 6px 9px; border-radius:999px; color:#fff; font-size:11px; font-weight:600; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);}
 .v-place{display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left;}
 .v-name{font-size:19px; font-weight:800; letter-spacing:-.025em; color:#fff; text-shadow:0 1px 10px rgba(0,0,0,.4);}
