@@ -834,7 +834,7 @@ function PlaceScreen({ place, clips, now, saved, onToggleSave, onBack, onOpenCli
       </div>
 
       <div className="place-body">
-        <button className="btn-record-here press" style={{ background: tint, boxShadow: `0 10px 30px ${hexToRgba(tint, 0.35)}`, marginTop: "0", marginBottom: "0" }} onClick={onRecordHere}>
+        <button className="btn-record-here press" style={{ background: tint, boxShadow: `0 10px 30px ${hexToRgba(tint, 0.35)}`, marginTop: "-12px", marginBottom: "-12px" }} onClick={onRecordHere}>
           <Video size={18} strokeWidth={2.3} /> Record here
         </button>
 
