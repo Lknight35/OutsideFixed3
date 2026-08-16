@@ -440,8 +440,7 @@ function SwipePage({ onBack, children, onGestureProgress }) {
       setTimeout(() => {
         onBack();
         setDx(window.innerWidth || 480);
-        if (onGestureProgress) onGestureProgress(0);
-      }, 160);
+      }, 340);
     } else {
       setDx(0);
       if (onGestureProgress) onGestureProgress(0);
@@ -2291,7 +2290,7 @@ export default function App() {
             )}
             {activePlace && !clipId && (
               <PlaceScreen place={activePlace} clips={clips} now={now} saved={savedIds.has(activePlace.id)}
-                onToggleSave={() => togglePlace(activePlace.id)} onBack={() => { if (previousClipId) { setClipId(previousClipId); } setPreviousClipId(null); setPlaceId(null); }}
+                onToggleSave={() => togglePlace(activePlace.id)} onBack={() => { setGestureProgress(0); if (previousClipId) { setClipId(previousClipId); } setPreviousClipId(null); setPlaceId(null); }}
                 onOpenClip={openClip} onRecordHere={() => openRecord(activePlace.id)}
                 onSearch={openSearch} onBell={openBell} premium={premiumActive}
                 onGestureProgress={setGestureProgress} />
