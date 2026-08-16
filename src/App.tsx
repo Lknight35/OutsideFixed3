@@ -2584,7 +2584,7 @@ const CSS = `
 
 /* -------------------------------- bottom nav ----------------------------- */
 .nav{flex:0 0 auto; display:flex; align-items:center; padding:9px 8px calc(10px + env(safe-area-inset-bottom));
-  background:rgba(10,11,13,.88); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid rgba(38,42,49,.7);}
+  background:rgba(10,11,13,.88); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid rgba(38,42,49,.7); position:relative; z-index:40;}
 .nav-btn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px 0; color:var(--muted); transition:color .2s, transform .3s var(--ease);}
 .nav-btn:active{transform:scale(.92);}
 .nav-btn.on{color:var(--accent);}
