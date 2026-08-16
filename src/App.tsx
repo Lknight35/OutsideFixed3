@@ -1939,6 +1939,8 @@ export default function App() {
 
   const [screen, setScreen] = useState("home");
   const [previousScreen, setPreviousScreen] = useState(null);
+  const [previousPageId, setPreviousPageId] = useState(null);
+  const [previousPageType, setPreviousPageType] = useState(null);
   const [placeId, setPlaceId] = useState(null);
   const [catId, setCatId] = useState(null);
   const [clipId, setClipId] = useState(null);
@@ -2059,8 +2061,8 @@ export default function App() {
     showToast("Added to your places");
   };
 
-  const openPlace = (id) => { setPreviousClipId(clipId || null); setClipId(null); setCatId(null); setPreviousScreen(screen); setPlaceId(id); };
-  const openCategory = (id) => { setClipId(null); setPlaceId(null); setPreviousScreen(screen); setCatId(id); };
+  const openPlace = (id) => { setPreviousClipId(clipId || null); setClipId(null); setCatId(null); setPlaceId(id); };
+  const openCategory = (id) => { setClipId(null); setPlaceId(null); setCatId(id); };
   const openClip = (id, ids) => { setViewerIds(ids && ids.length ? ids : [id]); setClipId(id); };
   const gotoScreen = (s) => {
     if (s === "home") {
@@ -2073,21 +2075,47 @@ export default function App() {
         setReviewOpen(false);
         setBellOpen(false);
         setPreviousScreen(null);
-      } else if (previousScreen && previousScreen !== "home") {
-        // On a menu (reached from a page) and clicking home: go back to page
+        setPreviousPageId(null);
+        setPreviousPageType(null);
+      } else if (previousPageType && previousPageId) {
+        // On a menu (reached from a page) and clicking home: restore page
         setScreen(previousScreen);
+        if (previousPageType === "place") {
+          setPlaceId(previousPageId);
+        } else if (previousPageType === "cat") {
+          setCatId(previousPageId);
+        }
         setPreviousScreen(null);
+        setPreviousPageId(null);
+        setPreviousPageType(null);
       } else {
         // Already on home or no previous page
         setScreen("home");
         setPreviousScreen(null);
+        setPreviousPageId(null);
+        setPreviousPageType(null);
       }
     } else {
       // Clicking a non-home menu item
-      setScreen(s);
-      setClipId(null);
-      setReviewOpen(false);
-      setBellOpen(false);
+      if (placeId || catId) {
+        // Save current page state
+        setPreviousScreen(screen);
+        setPreviousPageId(placeId || catId);
+        setPreviousPageType(placeId ? "place" : "cat");
+        // Close page and navigate to menu
+        setScreen(s);
+        setPlaceId(null);
+        setCatId(null);
+        setClipId(null);
+        setReviewOpen(false);
+        setBellOpen(false);
+      } else {
+        // Just navigate to menu
+        setScreen(s);
+        setClipId(null);
+        setReviewOpen(false);
+        setBellOpen(false);
+      }
     }
   };
   const openSearch = () => gotoScreen("search");
