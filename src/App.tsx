@@ -998,7 +998,7 @@ function ClipViewer({ clipsById, placeById, ids, startId, now, onBack, onOpenPla
         if (onGestureProgress) onGestureProgress(1);
         setLeaving("back");
         setDrag({ x: window.innerWidth || 480, y: 0, anim: true });
-        setTimeout(() => { if (onGestureProgress) onGestureProgress(0); onBack(); }, 240);
+        setTimeout(() => onBack(), 340);
       } else if (dX < -90 || (dX < -40 && s.vx < -0.55)) {
         if (onGestureProgress) onGestureProgress(0);
         setLeaving("place");
