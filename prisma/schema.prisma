@@ -1,0 +1,480 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  shows              Show[]
+  creditLedger       CreditLedger[]
+  usageRecords       UsageRecord[]
+  productionCosts    ProductionCost[]
+  watchProgress      WatchProgress[]
+  providerRequests   ProviderRequest[]
+
+  @@index([email])
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Show {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title         String
+  description   String?
+  logline       String?
+  format        String   @default("series")
+  genre         String   @default("[]")
+  tone          String?
+  setting       String?
+  timePeriod    String?
+  visualStyle   String?
+  themes        String   @default("[]")
+
+  status        String   @default("created")
+
+  posterUrl     String?
+  storyBibleId  String?   @unique
+  storyBible    StoryBible?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  totalRuntimeSeconds Int @default(0)
+
+  episodes            Episode[]
+  characters          Character[]
+  locations           Location[]
+  productionJobs      ProductionJob[]
+  productionCosts     ProductionCost[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Episode {
+  id            String   @id @default(cuid())
+  showId        String
+  show          Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  episodeNumber Int
+  title         String
+  description   String?
+  runtimeSeconds Int @default(0)
+
+  status        String   @default("created")
+
+  videoUrl      String?
+  subtitlesUrl  String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  scenes           Scene[]
+  generationJobs   GenerationJob[]
+  mediaAssets      MediaAsset[]
+  productionCosts  ProductionCost[]
+
+  @@unique([showId, episodeNumber])
+  @@index([showId])
+  @@index([status])
+}
+
+model StoryBible {
+  id            String   @id @default(cuid())
+  showId        String   @unique
+  show          Show?    @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  premise       String
+  worldRules    String   @default("[]")
+  visualAesthetic String?
+  timeline      String?
+
+  previousEvents     String   @default("[]")
+  unresolvedPlots    String   @default("[]")
+  unsolvedMysteries  String   @default("[]")
+  characterKnowledge String   @default("{}")
+
+  version       Int      @default(1)
+  updatedAt     DateTime @updatedAt
+
+  @@index([showId])
+}
+
+model Character {
+  id            String   @id @default(cuid())
+  showId        String
+  show          Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  name          String
+  age           String?
+  genderPresentation String?
+
+  physicalAppearance String?
+  facialFeatures    String?
+  hair          String?
+  bodyType      String?
+  wardrobe      String?
+
+  personality   String?
+  background    String?
+  motivations   String?
+  relationships String?
+
+  voiceProvider String?
+  voiceId       String?
+  voiceDescription String?
+
+  currentEmotionalState String?
+  injuries      String?
+  continuityNotes String?
+
+  characterAssets CharacterAsset[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([showId])
+  @@index([name])
+}
+
+model CharacterAsset {
+  id            String   @id @default(cuid())
+  characterId   String
+  character     Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  type          String
+  url           String
+  description   String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([characterId])
+  @@index([type])
+}
+
+model Location {
+  id            String   @id @default(cuid())
+  showId        String
+  show          Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+
+  architecture  String?
+  lighting      String?
+  atmosphere    String?
+  importantObjects String?
+  visualContinuityNotes String?
+
+  locationAssets LocationAsset[]
+  scenes         Scene[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([showId])
+  @@index([name])
+}
+
+model LocationAsset {
+  id            String   @id @default(cuid())
+  locationId    String
+  location      Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  url           String
+  description   String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([locationId])
+}
+
+model Scene {
+  id            String   @id @default(cuid())
+  episodeId     String
+  episode       Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  sceneNumber   Int
+
+  locationId    String?
+  location      Location? @relation(fields: [locationId], references: [id])
+
+  description   String
+  scenePurpose  String?
+  dialogue      String?
+  emotionalState String?
+  continuityRequirements String?
+
+  charactersPresent String   @default("[]")
+
+  timeOfDay     String?
+  createdAt     DateTime @default(now())
+
+  shots         Shot[]
+
+  @@unique([episodeId, sceneNumber])
+  @@index([episodeId])
+}
+
+model Shot {
+  id            String   @id @default(cuid())
+  sceneId       String
+  scene         Scene    @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  shotNumber    Int
+
+  description   String
+  action        String?
+  dialogue      String?
+
+  cameraFraming String?
+  cameraMovement String?
+  lensStyle     String?
+
+  lighting      String?
+  visualPrompt  String
+  negativePrompt String?
+
+  audioRequirements String?
+  continuityFromPreviousShot String?
+
+  targetDurationSeconds Int @default(5)
+
+  status        String   @default("pending")
+
+  generationJob GenerationJob?
+  mediaAsset    MediaAsset?
+
+  createdAt     DateTime @default(now())
+
+  @@unique([sceneId, shotNumber])
+  @@index([sceneId])
+  @@index([status])
+}
+
+model GenerationJob {
+  id            String   @id @default(cuid())
+
+  jobType       String
+
+  episodeId     String?
+  episode       Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  shotId        String?  @unique
+  shot          Shot?    @relation(fields: [shotId], references: [id], onDelete: Cascade)
+
+  provider      String
+  model         String?
+
+  prompt        String
+  request       String?
+  response      String?
+
+  status        String   @default("queued")
+  error         String?
+
+  attempt       Int      @default(1)
+  maxAttempts   Int      @default(3)
+  createdAt     DateTime @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+
+  estimatedCost Float    @default(0)
+  actualCost    Float?
+
+  @@index([jobType])
+  @@index([status])
+  @@index([provider])
+  @@index([createdAt])
+}
+
+model ProductionJob {
+  id            String   @id @default(cuid())
+  showId        String
+  show          Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  stage         String
+  status        String   @default("queued")
+
+  error         String?
+  attempt       Int      @default(1)
+
+  createdAt     DateTime @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+
+  @@index([showId])
+  @@index([status])
+}
+
+model MediaAsset {
+  id            String   @id @default(cuid())
+
+  episodeId     String
+  episode       Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  shotId        String?  @unique
+  shot          Shot?    @relation(fields: [shotId], references: [id], onDelete: Cascade)
+
+  type          String
+  url           String
+  duration      Int?
+  format        String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([episodeId])
+  @@index([type])
+}
+
+model CreditLedger {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type          String
+  amount        Float
+  description   String?
+
+  productionJobId String?
+  generationJobId String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model UsageRecord {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  operation     String
+  provider      String
+  model         String?
+
+  inputUnits    Int?
+  outputUnits   Int?
+  secondsGenerated Int?
+
+  estimatedCost Float
+  actualCost    Float?
+
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([provider])
+  @@index([createdAt])
+}
+
+model ProductionCost {
+  id            String   @id @default(cuid())
+  showId        String
+  show          Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  episodeId     String?
+  episode       Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  component     String
+  estimatedCost Float
+  actualCost    Float?
+
+  reserved      Boolean  @default(false)
+  reconciled    Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+
+  @@index([showId])
+  @@index([episodeId])
+  @@index([userId])
+}
+
+model ProviderRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider      String
+  endpoint      String?
+  model         String?
+
+  request       String
+  response      String?
+  error         String?
+
+  status        String   @default("pending")
+  durationMs    Int?
+  tokens        Int?
+
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([provider])
+  @@index([createdAt])
+}
+
+model WatchProgress {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  episodeId     String
+
+  positionSeconds Int @default(0)
+  watchedAt     DateTime @default(now())
+
+  @@unique([userId, episodeId])
+  @@index([userId])
+  @@index([watchedAt])
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+
+  stripeId      String   @unique
+
+  plan          String
+  status        String   @default("active")
+
+  monthlyCredits Int
+
+  maxRuntimeSeconds Int
+  maxConcurrentProductions Int
+  qualityTier   String
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([stripeId])
+}
