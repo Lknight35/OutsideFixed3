@@ -1,359 +1,216 @@
-# ShowForge - AI Entertainment Platform MVP
+# ShowForge
 
-A futuristic streaming platform where users describe what they want to watch and AI generates complete shows and movies.
+A streaming platform where the show doesn't exist until you ask for it. You
+describe what you want to watch; the system writes it, casts it, films it,
+scores it, assembles it, and plays it back.
 
-## What is ShowForge?
+> **Status: working MVP on mock providers.** The full pipeline runs end to end
+> and produces a playable episode with persistent characters and multi-episode
+> continuity. Generated media is placeholder content until real provider
+> credentials are configured — see [Providers](#providers).
 
-ShowForge is the beginning of a next-generation entertainment platform. Instead of browsing a catalog, users describe exactly what they want to watch:
+---
 
-**"Make me a gritty 1990s crime drama about two detectives investigating organized crime in Miami. Serious tone, realistic dialogue, cinematic photography, unexpected ending."**
+## Quick start
 
-The system then:
-- Generates a complete story and screenplay
-- Creates characters with persistent identities  
-- Designs locations with visual consistency
-- Generates individual video shots
-- Records dialogue and sound
-- Assembles everything into a playable episode
-- Allows users to continue the series with Episode 2
-
-## Architecture Overview
-
-### Core Technologies
-- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes
-- **Database**: SQLite (development), PostgreSQL (production)
-- **ORM**: Prisma
-- **Authentication**: NextAuth.js
-- **AI Providers**: Abstracted provider interfaces (mocks available)
-
-### Key Features
-- **Provider Abstraction**: All AI integrations go through abstraction layers
-- **Mock Providers**: Full mock implementations for development without API costs
-- **Cost Tracking**: Every operation tracked for economics
-- **Production Pipeline**: Multi-stage generation with progress tracking
-- **Continuity Engine**: Characters and worlds persist across episodes
-- **Story Bible**: Persistent narrative context for multi-episode content
-
-## Local Development Setup
-
-### Prerequisites
-- Node.js 20+
-- npm or yarn
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone <repo>
-cd OutsideFixed3
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up the database:
-```bash
-export DATABASE_URL="file:./prisma/dev.db"
-npx prisma db push
-```
-
-4. Start the development server:
-```bash
-npm run dev
-```
-
-5. Open http://localhost:3000 in your browser
-
-### Configuration
-
-Copy `.env.example` to `.env.local` and customize:
+Requires Node 20+ and a PostgreSQL database.
 
 ```bash
-cp .env.example .env.local
+npm install --legacy-peer-deps
+cp .env.example .env.local          # then set DATABASE_URL and NEXTAUTH_SECRET
+npx prisma migrate deploy
+npm run dev                          # http://localhost:3000
 ```
 
-Key variables:
-- `DATABASE_URL`: Database connection string
-- `NEXTAUTH_SECRET`: Random string for session encryption
-- `LLM_PROVIDER`: "mock" (default) or "claude"
-- `VIDEO_PROVIDER`: "mock" (default) or "google", "runway", "luma"
-- `DEMO_MODE`: "true" to use mocks even with credentials
+Sign in with any email and password — demo mode creates the account on first
+use. Then: **Create New Show** → describe something (or hit **Surprise Me**) →
+**Create My Show**.
 
-## Your First Show
-
-### 1. Sign In
-- Use any email/password combination (demo mode creates accounts automatically)
-- Example: `demo@example.com` / `password123`
-
-### 2. Create a Show
-- Click "Create New Show"
-- Describe what you want: "A sci-fi action series about a hacker fighting an AI overlord"
-- Optionally set advanced options (format, tone, setting, etc.)
-- Click "Create My Show"
-
-### 3. Watch the Production
-- The system shows real-time progress through production stages
-- Stages include: story, characters, locations, filming, assembly, etc.
-- Progress updates every 3 seconds
-
-### 4. Watch Your Show
-- Once complete, watch your generated episode
-- If using mock providers, you'll see placeholder content
-- With real providers, you'll see AI-generated video
-
-### 5. Generate Episode 2
-- Click "Generate Next Episode"
-- The AI remembers all previous story context
-- Characters and world maintain continuity
-
-## Provider Integration
-
-### Current Providers
-
-**LLM Providers** (for story/dialogue):
-- `mock`: Development/testing
-- `claude`: Claude API (add YOUR API key)
-- `openai`: OpenAI API
-- `gemini`: Google Gemini API
-
-**Image Providers** (for character/location references):
-- `mock`: Development/testing
-- `google`: Google Imagen
-- `openai`: DALL-E
-
-**Video Providers** (for shot generation):
-- `mock`: Development/testing (5-second placeholder videos)
-- `google`: Google Veo
-- `runway`: Runway Gen-3
-- `luma`: Luma Dream Machine
-
-**Voice Providers**:
-- `mock`: Development/testing
-- `elevenlabs`: ElevenLabs API
-
-### Switching to Real Providers
-
-1. Get API credentials from your chosen provider
-2. Set environment variables:
-```bash
-ANTHROPIC_API_KEY="sk-ant-..."
-LLM_PROVIDER="claude"
-VIDEO_PROVIDER="google"
-GOOGLE_API_KEY="AIza..."
-```
-
-3. Restart development server
-4. Create a show - it will now use real generation
-
-### Adding a New Provider
-
-1. Implement the interface in `lib/providers/types.ts`
-2. Create `lib/providers/realProviderName.ts`
-3. Update the provider factory in `lib/providers/index.ts`
-4. Add environment variable support
-5. Test with mock mode first
-
-## Database Models
-
-Key entities:
-- **User**: Account information
-- **Show**: Television series or movie project
-- **Episode**: Individual episode within a show
-- **StoryBible**: Persistent narrative context
-- **Character**: Cast members with identity and continuity
-- **Location**: Unique settings/environments
-- **Scene**: Sequence of shots within an episode
-- **Shot**: Individual video clip to be generated
-- **GenerationJob**: Asynchronous work queue item
-- **ProductionCost**: Economic tracking
-
-## Cost Tracking
-
-The system tracks:
-- Estimated cost before generation (reserve credits)
-- Actual cost after generation (consume credits)
-- Cost per component (story, video, audio, etc.)
-- Cost per user, per show, per provider
-- Refunds for failed generations
-
-Base estimates:
-- Story generation: $2.00
-- Character assets: $3.00 each
-- Video shot generation: $5.00 each
-- Audio/music: $0.50-$2.00 per shot
-- Assembly & QC: $1.50 total
-
-## Project Structure
-
-```
-/app                    # Next.js app directory
-  /api                  # API routes
-    /auth               # Authentication
-    /shows              # Show CRUD operations
-    /admin              # Admin dashboard
-/components             # React components
-  /landing.tsx          # Sign in / landing page
-  /home.tsx             # Shows library
-  /create-form.tsx      # Story creation form
-  /production-status.tsx # Real-time progress
-  /show-viewer.tsx      # Video player
-/lib                    # Utilities and business logic
-  /providers            # AI provider abstraction
-    /types.ts           # Provider interfaces
-    /mock.ts            # Mock implementations
-    /index.ts           # Provider factory
-  /services             # Core services
-    /showrunner.ts      # Story generation orchestration
-  /utils                # Helpers
-    /cost.ts            # Cost tracking
-    /validation.ts      # Input validation
-/prisma                 # Database schema
-  /schema.prisma        # Prisma schema
-  /dev.db               # SQLite database (local)
-/styles                 # Global styles
-  /globals.css          # Tailwind configuration
-```
-
-## Development Commands
+### Verify it actually works
 
 ```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Type checking
-npm run typecheck
-
-# Lint code
-npm run lint
-
-# Database commands
-export DATABASE_URL="file:./prisma/dev.db"
-npx prisma db push              # Apply schema changes
-npx prisma studio              # Open database UI
-
-# Clean database (WARNING: deletes data)
-rm prisma/dev.db
-npx prisma db push
+DATABASE_URL=... npx tsx scripts/verify-production.ts
 ```
 
-## Testing
+Drives a show from a natural-language prompt to a finished, playable episode,
+then generates episode 2 and asserts continuity. 26 checks covering shot
+completion, canonical character references, cost reconciliation, and Story
+Bible rollover.
 
-### Test the Full Flow
-1. Start the server: `npm run dev`
-2. Sign in: Use any email/password
-3. Create a show with mock providers
-4. Watch the production progress
-5. View the completed episode
-6. Generate Episode 2
+---
 
-### Test Real Providers
-1. Add API keys to `.env.local`
-2. Set provider env vars
-3. Create a show
-4. Monitor `/api/admin/stats` for generation job status
+## Deploying to Vercel
 
-## Debugging
+The repo is deploy-ready. `vercel.json` runs `prisma migrate deploy` during the
+build, so the schema is applied automatically on first deploy.
 
-### Enable Detailed Logging
+1. **New Project** in Vercel → import this repository.
+2. Under **Settings → Git**, set the production branch to the branch you want
+   to deploy. Use a dedicated Vercel project if you already have one pointing
+   at this repo — that keeps this deployment fully isolated from it.
+3. **Storage → Create Database → Postgres** (Neon). Attaching it sets
+   `DATABASE_URL` automatically.
+4. Add environment variables:
+   | Variable | Value |
+   |---|---|
+   | `NEXTAUTH_SECRET` | any random 32+ character string (`openssl rand -base64 32`) |
+   | `NEXTAUTH_URL` | your deployment URL |
+5. Deploy.
+
+**SQLite will not work on Vercel** — the filesystem is read-only and ephemeral.
+Postgres is required.
+
+For real production, replace `prisma migrate deploy` in the build with a
+dedicated migration step in your release process rather than the build itself.
+
+---
+
+## How a show gets made
+
+Production is an explicit state machine in `lib/services/pipeline.ts`:
+
+```
+writing → designing → planning → generating_video → generating_audio → assembling → complete
+```
+
+`ProductionPipeline.advance()` performs exactly one bounded unit of work and
+persists the result, so:
+
+- a single step always fits inside a serverless function invocation;
+- closing the browser pauses progress rather than losing it — all state is in
+  the database;
+- a failed shot retries individually and never restarts the episode.
+
+Today the client drives `advance()` by polling `POST /api/shows/[id]/advance`.
+Swapping in a queue worker (Inngest, QStash, a container) means calling the
+same `advance()` loop from the worker — no pipeline changes.
+
+### Continuity
+
+Every show has a **Story Bible** holding premise, world rules, previous events,
+unresolved threads and character knowledge. `showRunner.createNextEpisode()`
+reads it first, seeds the next episode from it, and rolls it forward. Existing
+characters and locations — and their canonical reference assets — are reused
+rather than regenerated, so the universe never resets.
+
+---
+
+## Providers
+
+Nothing in the application talks to a vendor SDK directly. Everything goes
+through the interfaces in `lib/providers/types.ts`, resolved by environment
+variable in `lib/providers/index.ts`.
+
+| Variable | Default | Options |
+|---|---|---|
+| `LLM_PROVIDER` | `mock` | `claude`, `openai`, `gemini` |
+| `IMAGE_PROVIDER` | `mock` | `google`, `openai` |
+| `VIDEO_PROVIDER` | `mock` | `google`, `runway`, `luma` |
+| `VOICE_PROVIDER` | `mock` | `elevenlabs` |
+| `SOUND_PROVIDER` | `mock` | `elevenlabs` |
+| `MUSIC_PROVIDER` | `mock` | `runway` |
+
+**Mock providers are complete and are what runs today.** They simulate latency
+(`MOCK_SPEED` scales it), return structured output derived from the user's
+actual prompt, and serve clearly-labelled placeholder media from
+`public/media/` so it's obvious where real AI assets will appear.
+
+**The non-mock branches in the factory are not yet implemented** — they
+currently fall back to the mock. Implementing one means writing a class against
+the existing interface and returning it from the factory; nothing else in the
+codebase changes.
+
+### Adding a real provider
+
+1. Implement the interface (e.g. `VideoProvider`) in `lib/providers/<name>.ts`.
+2. Return it from the matching branch in `lib/providers/index.ts`.
+3. Set the env var and its API key.
+
+---
+
+## Cost and limits
+
+Every provider operation writes a `UsageRecord` and a `ProductionCost` row with
+estimated cost, reconciled against actual cost when the provider reports one.
+Credits are a ledger (`grant` / `reserve` / `consume` / `refund`), not a mutable
+balance column.
+
+Configurable safeguards, enforced before expensive work:
+
+```
+MAX_EPISODE_SECONDS   MAX_SHOTS              MAX_SHOT_RETRIES
+MAX_PRODUCTION_COST   MAX_USER_DAILY_COST    MAX_CONCURRENT_PRODUCTIONS
+```
+
+`GET /api/admin/stats` reports totals, job status breakdown, spend and recent
+errors.
+
+---
+
+## Project structure
+
+```
+app/
+  api/
+    auth/[...nextauth]/    NextAuth
+    shows/create           create a show from a prompt
+    shows/[id]             read show + progress (ownership enforced)
+    shows/[id]/advance     run one production step
+    shows/[id]/episodes    generate the next episode from the Story Bible
+    episodes/[id]/subtitles WebVTT, timed from scene/shot structure
+    admin/stats            operational and cost metrics
+  page.tsx                 session resolved server-side: landing or library
+  create/                  show creation
+  show/[id]/               production progress, then the player
+components/                UI
+lib/
+  providers/               provider interfaces, mocks, factory
+  services/showrunner.ts   story generation, episode continuation
+  services/pipeline.ts     production state machine
+  utils/cost.ts            credits, usage, cost reconciliation
+  utils/validation.ts      Zod schemas, moderation, limit enforcement
+prisma/                    schema + migrations
+scripts/verify-production.ts  end-to-end verification
+```
+
+---
+
+## Commands
+
 ```bash
-DEBUG=showforge:* npm run dev
+npm run dev          # development server
+npm run build        # production build
+npm run typecheck    # tsc --noEmit
+npm run lint         # eslint
+npx prisma migrate deploy   # apply migrations
+npx prisma studio           # browse the database
 ```
 
-### Database Inspection
-```bash
-export DATABASE_URL="file:./prisma/dev.db"
-npx prisma studio  # Open GUI database viewer
-```
+---
 
-### Check Generation Jobs
-```bash
-curl http://localhost:3000/api/admin/stats
-```
+## Known limitations
 
-## Production Deployment
+- **Real providers are stubs.** Adapters are not implemented; every provider
+  branch falls back to the mock. Generated media is placeholder content.
+- **No FFmpeg assembly.** `stageAssembly` records structure, runtime and
+  subtitle timing, and serves the first shot as the episode video. Concatenating
+  and mixing shots into a single rendered MP4 is not implemented.
+- **No background worker.** Production advances while a browser tab is open.
+  State survives disconnection, but progress pauses. A queue should drive
+  `advance()` for true unattended generation.
+- **No object storage.** Media paths are local; S3 is not wired up.
+- **Stripe is schema-only.** No checkout or webhooks.
+- **Admin is an API endpoint**, not a UI.
+- **Moderation is a keyword filter**, adequate as a pipeline stage but not as a
+  real safety system.
+- **Automated test suite is the verification script**, not unit tests.
 
-### Database
-- Use PostgreSQL (production database)
-- Update `DATABASE_URL` to production connection string
-- Run migrations: `npx prisma migrate deploy`
+## Next priorities
 
-### Environment
-- Set `NEXTAUTH_SECRET` to random 32+ char string
-- Configure real provider API keys
-- Set `DEMO_MODE="false"` to use real providers
-
-### Deployment to Vercel/Railway
-```bash
-git push origin main
-```
-The build command is: `npm run build`
-
-## Known Limitations
-
-### Current MVP Scope
-- Targets 1-5 minute episodes (architecture scales to longer)
-- Mock providers return placeholder content
-- No user-uploaded assets yet
-- Basic subtitle generation
-- Single video provider output format
-
-### Future Enhancements
-- 30-60 minute episodes and feature films
-- 4K video support
-- Interactive/branching narratives
-- User-created character libraries
-- Remix and remixing
-- Collaborative universe building
-- Creator marketplace
-- Mobile native applications
-
-## Architecture Decisions
-
-### Why Provider Abstraction?
-AI technology changes rapidly. By abstracting providers, we can:
-- Switch models without rewriting logic
-- A/B test different providers
-- Use multiple providers simultaneously
-- Fall back gracefully
-- Track costs per provider
-- Route different shots to different models
-
-### Why SQLite for Development?
-- Zero configuration
-- No external services
-- Quick iteration
-- Full schema parity with PostgreSQL
-- Easy to reset
-
-### Why Prisma?
-- Type-safe database access
-- Simple schema management
-- Migration support
-- Relations and references
-- Works with SQLite and PostgreSQL
-
-### Why NextAuth.js?
-- Production-ready authentication
-- Session management built-in
-- Credential provider for demo mode
-- Easy to add OAuth later
-- Extensible
-
-## Support
-
-For issues or questions:
-1. Check the architecture documentation
-2. Review provider integration guides
-3. Inspect database with Prisma Studio
-4. Check generation job status in admin stats
-5. Review error logs in `/api/admin/stats`
-
-## License
-
-Proprietary - ShowForge Entertainment Platform
+1. Implement one real video provider end to end (highest-signal next step).
+2. FFmpeg assembly: concatenate shots, mix dialogue/ambience/score, normalise
+   audio, burn in the real runtime.
+3. Move `advance()` onto a queue so generation runs unattended.
+4. Object storage for generated media.
+5. Pass canonical character references into video generation for identity
+   consistency across shots.
