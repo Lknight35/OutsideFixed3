@@ -17,7 +17,7 @@ export default function ShowViewer({ show }: ShowViewerProps) {
   const router = useRouter()
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [showSubtitles, setShowSubtitles] = useState(true)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   if (!show.episodes.length) {
     return (
@@ -104,10 +104,23 @@ export default function ShowViewer({ show }: ShowViewerProps) {
 
           {currentEpisodeIndex === show.episodes.length - 1 && (
             <button
-              onClick={() => router.push(`/show/${show.id}/continue`)}
-              className="btn btn-primary"
+              onClick={async () => {
+                setIsGenerating(true)
+                const res = await fetch(`/api/shows/${show.id}/episodes`, {
+                  method: 'POST',
+                })
+                if (res.ok) {
+                  // Show page resumes the pipeline for the new episode.
+                  router.refresh()
+                  window.location.href = `/show/${show.id}`
+                } else {
+                  setIsGenerating(false)
+                }
+              }}
+              disabled={isGenerating}
+              className="btn btn-primary disabled:opacity-50"
             >
-              Generate Next Episode
+              {isGenerating ? 'Starting production…' : 'Generate Next Episode'}
             </button>
           )}
 

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" width="600" height="900" role="img" aria-label="Demo placeholder poster">
+  <defs>
+    <linearGradient id="p" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#3c096c"/><stop offset="55%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="900" fill="url(#p)"/>
+  <circle cx="300" cy="330" r="150" fill="none" stroke="#9d4edd" stroke-width="1.5" opacity=".35"/>
+  <circle cx="300" cy="330" r="96" fill="none" stroke="#9d4edd" stroke-width="1.5" opacity=".25"/>
+  <text x="300" y="700" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" fill="#e9d5ff" letter-spacing="7">SHOWFORGE</text>
+  <text x="300" y="736" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" fill="#64748b" letter-spacing="2">DEMO POSTER — AI ART APPEARS HERE</text>
+</svg>

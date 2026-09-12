@@ -2,22 +2,19 @@
 
 import { useMemo } from 'react'
 
+// Mirrors PRODUCTION_STATES in lib/services/pipeline.ts
 const PRODUCTION_STAGES = [
-  { id: 'validate', label: 'Validating your request' },
-  { id: 'moderate', label: 'Content safety check' },
-  { id: 'estimate', label: 'Estimating production cost' },
-  { id: 'story', label: 'Dreaming up your story' },
-  { id: 'characters', label: 'Creating characters' },
-  { id: 'locations', label: 'Designing locations' },
-  { id: 'scenes', label: 'Planning scenes' },
-  { id: 'video', label: 'Filming your production' },
-  { id: 'audio', label: 'Recording dialogue & sound' },
-  { id: 'assembly', label: 'Editing your episode' },
-  { id: 'qc', label: 'Quality check' },
+  { id: 'writing', label: 'Dreaming up your story' },
+  { id: 'designing', label: 'Casting characters and designing your world' },
+  { id: 'planning', label: 'Planning the cinematography' },
+  { id: 'generating_video', label: 'Filming your production' },
+  { id: 'generating_audio', label: 'Recording dialogue and score' },
+  { id: 'assembling', label: 'Editing your episode' },
   { id: 'complete', label: 'Finalizing' },
 ]
 
 interface ProductionStatusProps {
+  detail?: string
   show: {
     id: string
     title: string
@@ -31,7 +28,7 @@ interface ProductionStatusProps {
   }
 }
 
-export default function ProductionStatus({ show }: ProductionStatusProps) {
+export default function ProductionStatus({ show, detail }: ProductionStatusProps) {
   const currentStageIndex = useMemo(() => {
     return PRODUCTION_STAGES.findIndex((s) => s.id === show.status)
   }, [show.status])
@@ -96,12 +93,25 @@ export default function ProductionStatus({ show }: ProductionStatusProps) {
         {/* Current Stage */}
         <div className="text-center mb-12">
           <h2 className="text-2xl font-semibold text-brand-400 mb-2">
-            {PRODUCTION_STAGES[Math.max(0, Math.min(currentStageIndex, PRODUCTION_STAGES.length - 1))]?.label}
+            {show.status === 'failed'
+              ? 'Your production hit a snag'
+              : PRODUCTION_STAGES[
+                  Math.max(0, Math.min(currentStageIndex, PRODUCTION_STAGES.length - 1))
+                ]?.label}
           </h2>
-          {show.progress.totalShots > 0 && (
+          {show.status === 'failed' ? (
             <p className="text-slate-400">
-              {show.progress.completedShots} / {show.progress.totalShots} shots completed
+              We&rsquo;re retrying the affected scene. Nothing you created is lost.
             </p>
+          ) : (
+            <>
+              {detail && <p className="text-slate-300">{detail}</p>}
+              {show.progress.totalShots > 0 && (
+                <p className="text-slate-500 text-sm mt-1">
+                  {show.progress.completedShots} / {show.progress.totalShots} shots filmed
+                </p>
+              )}
+            </>
           )}
         </div>
 

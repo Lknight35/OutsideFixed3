@@ -6,6 +6,8 @@ import { validateStoryRequest, moderateStoryRequest, validateLimits } from '@/li
 import { estimateProductionCost, reserveCredits } from '@/lib/utils/cost'
 import { PrismaClient } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {

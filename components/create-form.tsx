@@ -3,6 +3,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+// Seed concepts for Surprise Me. Later these can be personalised from
+// viewing history; for now they just need to be genuinely watchable ideas.
+const SURPRISE_CONCEPTS = [
+  'A psychological horror set in an isolated hotel during a snowstorm. I don\'t want to choose the plot — surprise me.',
+  'A funny animated show about three incompetent aliens trying to secretly live in suburban America.',
+  'A futuristic detective series set in Seattle in 2085. The protagonist is a retired detective with a sarcastic robot partner.',
+  'A gritty crime drama about two detectives investigating organized crime in Miami. Serious tone, realistic dialogue, unexpected ending.',
+  'A quiet drama about a lighthouse keeper who starts receiving radio messages from someone claiming to be her younger self.',
+  'A heist comedy where the crew are all retired schoolteachers robbing the district that cut their pensions.',
+]
+
 export default function CreateForm() {
   const [description, setDescription] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
@@ -236,12 +247,16 @@ export default function CreateForm() {
           <button
             type="button"
             onClick={() => {
-              setDescription('')
-              setShowAdvanced(false)
+              const pick =
+                SURPRISE_CONCEPTS[
+                  Math.floor(Math.random() * SURPRISE_CONCEPTS.length)
+                ]
+              setDescription(pick)
+              setError('')
             }}
-            className="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+            className="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-lg transition-all whitespace-nowrap"
           >
-            Clear
+            Surprise Me
           </button>
         </div>
 

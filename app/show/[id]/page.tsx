@@ -27,7 +27,7 @@ export default function ShowPage() {
 
   const [show, setShow] = useState<Show | null>(null)
   const [loading, setLoading] = useState(true)
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null)
+  const [detail, setDetail] = useState<string>('')
 
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
@@ -35,26 +35,44 @@ export default function ShowPage() {
     }
   }, [sessionStatus, router])
 
+  // Drives the production one step at a time, then refreshes the view.
+  // Serverless-safe: each tick is a single bounded request, and closing the
+  // tab simply pauses progress rather than losing it — state lives in the DB.
   useEffect(() => {
-    fetchShow()
-    const interval = setInterval(fetchShow, 3000) // Poll every 3 seconds
-    setRefreshInterval(interval)
-    return () => clearInterval(interval)
-  }, [showId])
+    let cancelled = false
 
-  const fetchShow = async () => {
-    try {
-      const response = await fetch(`/api/shows/${showId}`)
-      if (response.ok) {
-        const data = await response.json()
+    const tick = async () => {
+      if (cancelled) return
+      try {
+        const res = await fetch(`/api/shows/${showId}`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled) return
         setShow(data.show)
+
+        if (data.show.status !== 'complete' && data.show.status !== 'failed') {
+          const step = await fetch(`/api/shows/${showId}/advance`, {
+            method: 'POST',
+          })
+          if (step.ok && !cancelled) {
+            const result = await step.json()
+            setDetail(result.detail ?? '')
+          }
+        }
+      } catch (error) {
+        console.error('Production poll failed', error)
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-    } catch (error) {
-      console.error('Error fetching show:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+
+    tick()
+    const interval = setInterval(tick, 1200)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [showId])
 
   if (loading || !show) {
     return (
@@ -73,5 +91,5 @@ export default function ShowPage() {
   }
 
   // Show is still generating, display production status
-  return <ProductionStatus show={show} />
+  return <ProductionStatus show={show} detail={detail} />
 }

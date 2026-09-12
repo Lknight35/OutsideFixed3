@@ -190,6 +190,105 @@ export class ShowRunner {
     return show.id
   }
 
+  /**
+   * Creates the next episode in an existing show, seeded with the Story Bible
+   * so returning characters, world state and unresolved threads carry forward.
+   */
+  async createNextEpisode(showId: string): Promise<string> {
+    const show = await prisma.show.findUniqueOrThrow({
+      where: { id: showId },
+      include: {
+        storyBible: true,
+        characters: true,
+        episodes: {
+          orderBy: { episodeNumber: 'desc' },
+          include: { scenes: true },
+        },
+      },
+    })
+
+    const previous = show.episodes[0]
+    const nextNumber = (previous?.episodeNumber ?? 0) + 1
+    const bible = show.storyBible
+
+    const previousEvents: string[] = bible
+      ? JSON.parse(bible.previousEvents)
+      : []
+    const unresolved: string[] = bible ? JSON.parse(bible.unresolvedPlots) : []
+
+    // The continuity package handed to the writer for the next episode.
+    const continuity = [
+      `Series: ${show.title}. ${show.logline ?? ''}`,
+      `Tone: ${show.tone ?? 'grounded'}. Setting: ${show.setting ?? 'unspecified'}.`,
+      `Returning cast: ${show.characters.map((c) => c.name).join(', ')}.`,
+      previousEvents.length
+        ? `Previously: ${previousEvents.join(' ')}`
+        : `Previously: ${previous?.description ?? 'Series premiere.'}`,
+      unresolved.length ? `Unresolved: ${unresolved.join('; ')}.` : '',
+      `Write episode ${nextNumber}, continuing this canon without resetting it.`,
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    const story = await this.generateStory({
+      userDescription: continuity,
+      advancedOptions: {
+        format: show.format as 'movie' | 'series' | 'short',
+        genre: JSON.parse(show.genre),
+        setting: show.setting ?? undefined,
+        timePeriod: show.timePeriod ?? undefined,
+        tone: show.tone ?? undefined,
+        visualStyle: show.visualStyle ?? undefined,
+      },
+    })
+
+    const episode = await prisma.episode.create({
+      data: {
+        showId: show.id,
+        episodeNumber: nextNumber,
+        title: story.episodeTitle,
+        description: story.synopsis,
+        status: 'generating',
+      },
+    })
+
+    for (const sceneData of story.scenes) {
+      await prisma.scene.create({
+        data: {
+          episodeId: episode.id,
+          sceneNumber: sceneData.number,
+          description: sceneData.description,
+          scenePurpose: sceneData.title,
+          charactersPresent: JSON.stringify(sceneData.charactersPresent),
+        },
+      })
+    }
+
+    // Roll the Story Bible forward so episode N+2 inherits this episode too.
+    if (bible) {
+      await prisma.storyBible.update({
+        where: { id: bible.id },
+        data: {
+          previousEvents: JSON.stringify([
+            ...previousEvents,
+            `Episode ${previous?.episodeNumber ?? 1} — ${previous?.title ?? 'Pilot'}: ${
+              previous?.description ?? ''
+            }`,
+          ]),
+          version: { increment: 1 },
+        },
+      })
+    }
+
+    // Characters and locations already exist, so resume at shot planning.
+    await prisma.show.update({
+      where: { id: show.id },
+      data: { status: 'designing' },
+    })
+
+    return episode.id
+  }
+
   async getShowWithAllData(showId: string) {
     return prisma.show.findUniqueOrThrow({
       where: { id: showId },

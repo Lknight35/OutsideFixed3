@@ -1,7 +1,84 @@
 import * as Types from './types'
 
-// Simulate generation delay
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
+/**
+ * Simulated provider latency. Scaled by MOCK_SPEED so demo deployments stay
+ * responsive while still exercising the real async code paths.
+ */
+const SPEED = Number(process.env.MOCK_SPEED ?? '0.15')
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms * SPEED))
+
+const PLACEHOLDER_IMAGE = '/media/placeholder-reference.svg'
+const PLACEHOLDER_VIDEO = '/media/placeholder-shot.mp4'
+const PLACEHOLDER_AUDIO = '/media/placeholder-audio.mp3'
+
+/** Deterministic pseudo-random pick so the same prompt yields the same show. */
+function seeded<T>(seed: string, options: T[], salt = 0): T {
+  let h = salt
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return options[h % options.length]
+}
+
+const STOPWORDS = new Set([
+  'make','give','create','me','a','an','the','about','with','that','this','want',
+  'watch','show','movie','series','set','in','of','and','or','to','for','on','is',
+  'it','i','my','please','something','where','who','their','they','his','her',
+])
+
+// Descriptive modifiers steer tone/genre but read badly inside a title.
+const MODIFIERS = new Set([
+  'gritty','dark','serious','realistic','cinematic','unexpected','funny','light',
+  'late','early','modern','classic','powerful','mysterious','strange','weird',
+  'beautiful','isolated','secret','secretly','incompetent','sarcastic','retired',
+  'psychological','animated','futuristic','tone','style','ending','dialogue',
+  'photography','pacing','runtime','minute','episode','season','surprise',
+])
+
+/**
+ * Pulls the most distinctive nouns out of the request to seed names and titles.
+ * Longer words first — they carry more of the request's identity.
+ */
+function keywords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !STOPWORDS.has(w) && !MODIFIERS.has(w))
+    .sort((a, b) => b.length - a.length)
+}
+
+const TITLE_SHAPES = [
+  (k: string[]) => `The ${cap(k[0] ?? 'Signal')} ${cap(k[1] ?? 'Protocol')}`,
+  (k: string[]) => `${cap(k[0] ?? 'Long')} ${cap(k[1] ?? 'Shadow')}`,
+  (k: string[]) => `No ${cap(k[0] ?? 'Country')} for ${cap(k[1] ?? 'Us')}`,
+  (k: string[]) => `${cap(k[0] ?? 'Static')}`,
+]
+
+const cap = (w: string) => (w ? w[0].toUpperCase() + w.slice(1) : w)
+
+const GENRE_HINTS: Array<[RegExp, string[]]> = [
+  [/horror|haunt|scary|terror/i, ['horror', 'thriller']],
+  [/comed|funny|sitcom|hilarious/i, ['comedy']],
+  [/crime|detective|heist|noir|murder/i, ['crime', 'drama']],
+  [/sci-?fi|space|future|robot|alien|cyber/i, ['sci-fi']],
+  [/fantasy|magic|dragon|wizard/i, ['fantasy', 'adventure']],
+  [/romance|love|romantic/i, ['romance', 'drama']],
+  [/documentar/i, ['documentary']],
+  [/animat|cartoon/i, ['animation', 'comedy']],
+]
+
+function inferGenre(prompt: string): string[] {
+  for (const [pattern, genres] of GENRE_HINTS) {
+    if (pattern.test(prompt)) return genres
+  }
+  return ['drama']
+}
+
+function inferTone(prompt: string): string {
+  if (/funny|comed|light|silly/i.test(prompt)) return 'wry and warm'
+  if (/gritty|dark|brutal|bleak/i.test(prompt)) return 'gritty and restrained'
+  if (/horror|dread|scary/i.test(prompt)) return 'slow-building dread'
+  return 'grounded and character-first'
+}
 
 export class MockLLMProvider implements Types.LLMProvider {
   async generateStory(
@@ -9,63 +86,90 @@ export class MockLLMProvider implements Types.LLMProvider {
   ): Promise<Types.StoryGenerationResponse> {
     await delay(1000)
 
-    const genres = request.advancedOptions?.genre || ['drama', 'thriller']
-    const setting = request.advancedOptions?.setting || 'Modern urban city'
-    const format = request.advancedOptions?.format || 'series'
+    const prompt = request.userDescription
+    const opts = request.advancedOptions ?? {}
+    const k = keywords(prompt)
+    const subject = k[0] ?? 'signal'
+    const place = opts.setting || cap(k[1] ?? 'the city')
+
+    const showTitle = seeded(prompt, TITLE_SHAPES)(k)
+    const protagonist = seeded(
+      prompt,
+      ['Rey Alvarez', 'Dana Ito', 'Marcus Vale', 'Nadia Okoro', 'Sam Reyes'],
+      7
+    )
+    const second = seeded(
+      prompt,
+      ['Iris', 'Cormac', 'Tess', 'Odell', 'Junie'],
+      13
+    )
 
     return {
-      showTitle: 'Neon Dreams',
-      episodeTitle: 'Pilot',
-      logline:
-        'A mysterious detective uncovers a conspiracy that challenges everything they know.',
-      synopsis:
-        'Set in a futuristic cityscape, our protagonist navigates a world of secrets and deception.',
-      format,
-      genre: genres,
-      tone: request.advancedOptions?.tone || 'noir',
-      setting,
-      timePeriod: request.advancedOptions?.timePeriod || '2085',
-      visualStyle: request.advancedOptions?.visualStyle || 'cinematic cyberpunk',
-      themes: ['identity', 'betrayal', 'power'],
+      showTitle,
+      episodeTitle: seeded(
+        prompt,
+        ['Cold Open', 'First Light', 'The Long Way Down', 'Pilot'],
+        3
+      ),
+      logline: `${protagonist} is pulled into a story about ${subject} — and cannot walk away clean.`,
+      synopsis: `Built from your request: "${prompt.slice(0, 180)}${
+        prompt.length > 180 ? '…' : ''
+      }" ${protagonist} navigates ${place}, where ${second} knows more than they admit.`,
+      format: opts.format || 'series',
+      genre: opts.genre?.length ? opts.genre : inferGenre(prompt),
+      tone: opts.tone || inferTone(prompt),
+      setting: place,
+      timePeriod: opts.timePeriod || 'present day',
+      visualStyle: opts.visualStyle || 'anamorphic, high contrast, natural light',
+      themes: [subject, 'loyalty', 'consequence'],
       characters: [
         {
           id: 'char_001',
-          name: 'Alex Chen',
-          description: 'A cynical detective with a hidden past',
+          name: protagonist,
+          description: `Central figure of the story; defined by the ${subject} they cannot let go of`,
           role: 'protagonist',
         },
         {
           id: 'char_002',
-          name: 'Morgan',
-          description: 'An AI companion with questionable motives',
+          name: second,
+          description: `Counterweight to ${protagonist}; holds the information that turns the story`,
           role: 'supporting',
         },
       ],
       locations: [
         {
           id: 'loc_001',
-          name: 'The Neon District',
-          description: 'A vibrant downtown area filled with holographic signs',
+          name: `${place}`,
+          description: `The primary world of the story, rendered in ${
+            opts.visualStyle || 'grounded, cinematic'
+          } style`,
         },
         {
           id: 'loc_002',
-          name: 'Police Precinct',
-          description: 'A high-tech law enforcement headquarters',
+          name: 'The Interior',
+          description: 'A closed, private space where the truth gets said out loud',
         },
       ],
       scenes: [
         {
           id: 'scene_001',
           number: 1,
-          title: 'Introduction',
-          description: 'Alex is called to investigate a mysterious crime',
+          title: 'Cold Open',
+          description: `${protagonist} arrives in ${place} and finds the situation already in motion`,
           charactersPresent: ['char_001'],
         },
         {
           id: 'scene_002',
           number: 2,
-          title: 'Partnership',
-          description: 'Alex meets Morgan for the first time',
+          title: 'The Meeting',
+          description: `${protagonist} confronts ${second}, and the shape of the problem changes`,
+          charactersPresent: ['char_001', 'char_002'],
+        },
+        {
+          id: 'scene_003',
+          number: 3,
+          title: 'Turn',
+          description: `The ${subject} forces a decision neither of them wanted to make`,
           charactersPresent: ['char_001', 'char_002'],
         },
       ],
@@ -86,7 +190,7 @@ export class MockLLMProvider implements Types.LLMProvider {
 export class MockImageProvider implements Types.ImageProvider {
   async generateImage(_request: Types.ImageGenerationRequest): Promise<string> {
     await delay(2000)
-    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+    return PLACEHOLDER_IMAGE
   }
 
   async generateCharacterReference(
@@ -95,10 +199,10 @@ export class MockImageProvider implements Types.ImageProvider {
     await delay(3000)
     // Return mock image URLs
     return [
-      `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`,
-      `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`,
-      `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`,
-      `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`,
+      PLACEHOLDER_IMAGE,
+      PLACEHOLDER_IMAGE,
+      PLACEHOLDER_IMAGE,
+      PLACEHOLDER_IMAGE,
     ]
   }
 
@@ -107,8 +211,8 @@ export class MockImageProvider implements Types.ImageProvider {
   ): Promise<string[]> {
     await delay(3000)
     return [
-      `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`,
-      `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`,
+      PLACEHOLDER_IMAGE,
+      PLACEHOLDER_IMAGE,
     ]
   }
 }
@@ -122,7 +226,7 @@ export class MockVideoProvider implements Types.VideoProvider {
     return {
       jobId: `job_${Date.now()}`,
       status: 'complete',
-      videoUrl: '/mock-video.mp4',
+      videoUrl: PLACEHOLDER_VIDEO,
       estimatedCost: 0.5,
     }
   }
@@ -132,7 +236,7 @@ export class MockVideoProvider implements Types.VideoProvider {
     return {
       jobId: _jobId,
       status: 'complete',
-      videoUrl: '/mock-video.mp4',
+      videoUrl: PLACEHOLDER_VIDEO,
     }
   }
 }
@@ -143,7 +247,7 @@ export class MockVoiceProvider implements Types.VoiceProvider {
   ): Promise<Types.SpeechGenerationResponse> {
     await delay(1000)
     return {
-      audioUrl: '/mock-audio.mp3',
+      audioUrl: PLACEHOLDER_AUDIO,
       durationSeconds: 10,
     }
   }
@@ -173,18 +277,18 @@ export class MockSoundProvider implements Types.SoundProvider {
     _request: Types.SoundEffectRequest
   ): Promise<string> {
     await delay(1000)
-    return '/mock-sound.mp3'
+    return PLACEHOLDER_AUDIO
   }
 
   async generateAmbience(_request: Types.AmbienceRequest): Promise<string> {
     await delay(1000)
-    return '/mock-ambience.mp3'
+    return PLACEHOLDER_AUDIO
   }
 }
 
 export class MockMusicProvider implements Types.MusicProvider {
   async generateMusic(_request: Types.MusicGenerationRequest): Promise<string> {
     await delay(2000)
-    return '/mock-music.mp3'
+    return PLACEHOLDER_AUDIO
   }
 }
