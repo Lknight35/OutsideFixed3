@@ -453,6 +453,12 @@ function AppContent() {
   useEffect(() => {
     if (Platform.OS === "web") return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      // This connection screen uses an overlay flag instead of the route stack.
+      // Match its visible Back action before navigating the screen underneath.
+      if (showConnection && apiUrl) {
+        setShowConnection(false);
+        return true;
+      }
       if (routes.length) {
         back();
         return true;
@@ -464,7 +470,7 @@ function AppContent() {
       return false;
     });
     return () => sub.remove();
-  }, [routes.length, tab, back]);
+  }, [routes.length, tab, back, showConnection, apiUrl]);
   function push(next: Route) {
     if (generation === authGeneration.current)
       setRoutes((value) => [...value, next]);
@@ -849,7 +855,13 @@ function AppContent() {
         </View>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={
+            Platform.OS === "ios"
+              ? "padding"
+              : Platform.OS === "android"
+                ? "height"
+                : undefined
+          }
         >
           {!!(!!authenticated && savedError) && (
             <Pressable
