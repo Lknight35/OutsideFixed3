@@ -7,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import {
@@ -142,6 +143,8 @@ export function RecordScreen({
   onSelectPlace,
   onUploaded,
 }: Props) {
+  const { height: windowHeight } = useWindowDimensions();
+  const cameraHeight = Math.min(480, Math.max(180, Math.round(windowHeight * 0.36)));
   const [cameraPermission, requestCameraPermission, getCameraPermission] =
     useCameraPermissions();
   const [
@@ -501,7 +504,7 @@ export function RecordScreen({
         </View>
       ) : (
         <>
-          <View style={recordStyles.cameraFrame}>
+          <View style={[recordStyles.cameraFrame, { height: cameraHeight }]}>
             {localUri ? (
               <CaptureReview uri={localUri} />
             ) : (
@@ -706,8 +709,6 @@ const recordStyles = StyleSheet.create({
   },
   cameraFrame: {
     width: "100%",
-    aspectRatio: 3 / 4,
-    maxHeight: 480,
     backgroundColor: "#101014",
     borderRadius: 22,
     overflow: "hidden",

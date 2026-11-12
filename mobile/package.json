@@ -12,7 +12,8 @@
     "export:android": "expo export --platform android",
     "export:ios": "expo export --platform ios",
     "generate:icon": "node scripts/generate-icon.cjs",
-    "test": "node --test src/__tests__/*.test.mjs",
+    "test": "node --test src/__tests__/*.test.mjs scripts/metro-assets.test.cjs",
+    "postinstall": "node scripts/patch-metro-image-size.cjs",
     "test:map": "node --test scripts/map-security.test.cjs",
     "test:ui": "node scripts/ui-smoke.cjs"
   },

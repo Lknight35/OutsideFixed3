@@ -45,7 +45,10 @@ The Expo configuration uses provisional identifiers `app.outside.discovery`. Con
 
 ## Checks
 
+`npm ci` applies the guarded Metro 0.83.3 asset-loader compatibility patch for the security-fixed image-size 2.0.3 parser. The mobile test suite exercises that development-bundle path as well as session, URL and geographic behavior. Review the patch when upgrading Metro; it deliberately rejects an unreviewed version.
+
 ```sh
+npm test
 npm run typecheck
 npm run export:android
 npm run export:ios

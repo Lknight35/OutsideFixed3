@@ -3,6 +3,8 @@
 Outside is a native iOS/Android app for real place discovery, verified capture, mutual friendships, and private outings. The original Claude Vite prototype is preserved at the repository root; the connected native implementation is in `mobile/`, with its persistent API in `server/`.
 
 - [Native app and local build](mobile/README.md)
+- [Install and test on a phone](docs/phone-testing.md)
+- [Delivery evidence and remaining work](docs/delivery.md)
 - [Backend and moderation](server/README.md)
 - [Source audit and product map](docs/source-audit.md)
 - [Architecture and security boundaries](docs/architecture.md)

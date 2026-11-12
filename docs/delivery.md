@@ -1,69 +1,54 @@
 # Outside delivery
 
-This is a connected local-development implementation, not a store-ready release. The original Claude browser prototype remains intact; the native app and persistent backend are separate additions.
+The source is preserved and pushed to `development/outside-native` in `Lknight35/OutsideFixed3`. The original browser prototype remains intact. The app and backend are local-development software, not a store-ready release.
 
-## Installable build status
+## Android artifacts
 
-**Both Android APKs have been produced and their signatures verified. Installation/launch verification is in progress. No iOS IPA has been produced.** The network rules for `repo.reactnative.dev` and `tile.openstreetmap.org` are now applied. Both the standalone review and debug Gradle builds pass. Android 15 software emulation encountered restarting system services; runtime testing is continuing on Android 11.
+- `artifacts/outside-review.apk`: standalone, development-signed review build with JavaScript included; no Metro required. Installed and launched on the Android 11 x86_64 emulator. SHA256: `7b9b463295a0a7b33c103ff0cddf8d9b457e00c3458395704bbb428ab8f6ab53`.
+- `artifacts/outside-debug.apk`: debug build requiring Metro on port 8081. Installed and launched on the Android 11 x86_64 emulator, with authenticated Home and the saved place restored.
+- `artifacts/outside-review-initial-verified.apk`: earlier standalone checkpoint installed, launched and exercised on that emulator.
 
-Reproduce the builds with:
+Both variants contain arm64 and x86_64 native code. Signature checks pass; each current APK has a `.sha256` file. Device-side APK hashes are compared with the delivered files in `artifacts/validation/*verification.json`. These builds permit local-network HTTP explicitly and use development signing; they are not Play Store releases.
 
-```sh
-cd /workspace/OutsideFixed3
-npm run build:android
-npm run build:android:debug
-```
+The original `repo.reactnative.dev` network blocker is resolved. Android 15 software emulation had unstable startup services; native verification used Android 11. No physical Android device has been tested.
 
-The script verifies the Gradle distribution checksum, generates the native Android project, builds arm64 and x86_64, verifies the APK signature, and places the results at `artifacts/outside-review.apk` and `artifacts/outside-debug.apk`, each with a SHA-256 file. These are development-signed internal builds with explicitly enabled local-network HTTP, not Play Store releases. The review APK includes JavaScript and needs no Metro server; the debug APK requires Metro on port 8081.
+See [phone installation and testing](phone-testing.md) for the exact backend, APK, USB and Wi-Fi steps. The local API is not publicly hosted; a phone must reach a server running on its own network or a separately deployed HTTPS service.
 
-The generated iOS project and its JavaScript bundle validate here. Its unused push entitlement has been removed. Free local iPhone testing can use Xcode on a Mac and a free Apple ID/Personal Team, as described in the mobile instructions. Neither Xcode nor Apple signing is available in this Linux task.
+## What was verified
 
-## Implemented
+| Check | Result |
+| --- | --- |
+| Backend tests | 16 passed; zero failed/skipped |
+| Mobile tests | 7 passed; zero failed/skipped, including Metro development asset loading |
+| TypeScript | Passed |
+| Map security regression | Passed: hostile labels, invalid coordinates, selection callbacks and attribution |
+| Session races | Passed: old success/401 responses cannot replace or sign out a newer account |
+| Connected phone/tablet browser flows | Passed: register/login, real geocoder search, saves, mutual friends, private invitations/accepted one-to-one chat, Next Move, maps, earned progress, preferences, avatars and deletion |
+| Genuine map imagery | Verified in Chromium with the existing managed CA trust; no TLS checks disabled |
+| Native standalone app | Installed and launched; real account creation/authentication, search for Bryant Park, saved place and place details, camera/microphone permission dialogs, and emulated rear-camera preview exercised |
+| Native debug app | Installed APK hash matched; Metro bundle loaded; authenticated Home and saved place restored |
+| Android native compilation/signing | Review and debug builds passed |
+| iOS JavaScript export and project generation | Passed; native iOS compilation/signing not available here |
+| Original Vite prototype | Build passed; original `src/` unchanged |
 
-- A shared dark/purple native design, responsive phone/tablet layouts, accessible navigation and real empty states.
-- Persistent accounts, secure native session storage, profile-photo upload/removal and password-confirmed account deletion.
-- Genuine OpenStreetMap search, searches over authorized recent recording captions/place text, feed filters, place pages and saved places/videos/searches.
-- Rear-camera recording code, foreground GPS permission/freshness checks, server-issued capture tickets, bounded authenticated uploads, FFmpeg conversion/thumbnails, private media range delivery, retry/restart recovery and operator moderation.
-- Mutual friend requests, private friend activity/maps, hidden-location controls, invitations with individual responses and private one-to-one chats expiring 24 hours after the outing ends.
-- Discover Around with accurate coordinates and interactive maps, private Next Move sharing, Outside Signal, notification inbox and granular preferences.
-- Backend-earned contribution credit: three approved distinct place/day updates grant 30 days of advanced access. Public clients cannot self-approve or grant entitlements.
+The debug test exposed a compatibility issue between Metro's legacy image-path argument and the security-fixed image-size parser. A version-guarded postinstall patch adapts the argument to bytes. Its regression test failed before the fix and passes after a fresh `npm ci`; vulnerable parser versions were not restored.
 
-The reference image's group chat, gallery video uploads, follower/popularity counts and paid subscription controls are excluded in accordance with the written specification.
+Native testing also prompted Android keyboard avoidance, correct Back handling for the server-change overlay, and a shorter responsive camera preview to keep capture controls visible. The final standalone APK includes these changes, was reinstalled and launched, and displayed the capture controls within the tested viewport. Camera/GPS capture still needs physical-device testing.
 
-## Verified
+Backend media tests use isolated fixtures and perform real decoding, FFmpeg conversion, thumbnail generation, moderation, range delivery and authorization revocation. Native test accounts use a separate API/database on port 8788. No fabricated activity is inserted into the normal service.
 
-| Check                                                                       | Result                                                                                                                                                                   |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Saved installer from both lockfiles, then checks                            | Passed                                                                                                                                                                   |
-| Backend automated suite                                                     | 16 passed; zero failed/skipped                                                                                                                                           |
-| Client URL/session/geographic tests                                         | 6 passed; zero failed/skipped                                                                                                                                            |
-| Map hostile-label/coordinate/callback regression                            | Passed in Chromium                                                                                                                                                       |
-| Connected browser flows, phone and tablet                                   | Passed: account, live geocoder search, saves, mutual friends, private invitation/chat/Next Move, map marker interaction, earned progress, settings, avatars and deletion |
-| Delayed previous-session success/401 responses                              | Passed; no cross-account replacement or logout                                                                                                                           |
-| TypeScript                                                                  | Passed                                                                                                                                                                   |
-| Android and iOS JavaScript/Hermes exports                                   | Passed; under `artifacts/android-bundle` and `artifacts/ios-bundle`                                                                                                      |
-| iOS native-project generation                                               | Passed; no native compilation claimed                                                                                                                                    |
-| Preserved Vite prototype build                                              | Passed                                                                                                                                                                   |
-| Backend dependency audit                                                    | Zero known advisories                                                                                                                                                    |
-| Mobile dependency audit                                                     | Zero high/critical; 12 moderate and 1 low advisories remain in the Expo configuration/build dependency graph                                                             |
-| Android native packaging                                                    | Review and debug APKs built; signatures verified; installation/launch testing in progress                                                                                 |
-| Physical camera/GPS, native permission lifecycle and installed-app behavior | Not verified on a device                                                                                                                                                 |
+## iPhone
 
-Media tests use isolated databases and explicit test fixtures. They exercise actual decoding, transcoding, moderation, byte-range delivery and authorization revocation; they do not establish the authenticity of real-world footage. Browser smoke accounts are deleted after testing. Existing unrelated local accounts/data are preserved. No runtime database, uploaded media, credentials or development signing keys are included in the source archive.
+No signed IPA exists. The generated project no longer requests an unused APNs entitlement. The fastest free local path is a Mac with Xcode, a free Apple ID/Personal Team, and a paired iPhone with Developer Mode. [Mobile instructions](../mobile/README.md#free-local-iphone-testing) cover signing and connecting to the local backend. EAS/Apple/hosting accounts were not supplied; no paid services were provisioned.
 
-## Remaining work
+## Remaining work and limits
 
-1. Finish APK installation/launch and native camera/GPS, media upload and permission/background testing. Genuine map imagery, marker behavior and attribution are now verified in Chromium using the existing managed CA trust; native map imagery is not yet verified.
-2. Produce and test a signed iOS build on appropriate Apple tooling.
-3. Provision a phone-reachable HTTPS backend, production storage/backups, account email verification/recovery, push-delivery credentials and moderation operations before public use. The current API is a real local service with SQLite and disk media, not an externally deployed service.
-4. Add stronger device attestation/abuse controls for public capture claims. Current checks reject stale, distant, inaccurate and reported-mocked fixes; GPS and client declarations cannot prove authenticity.
-5. Implement the advanced recommendation/planning tools themselves. Earned entitlement accounting is real; the app clearly identifies those tools as unavailable. There are no fabricated AI summaries or paid subscriptions.
-6. Complete the Expo SDK/tooling dependency upgrade and release hardening, including application identifiers and production signing.
+1. Validate physical camera/GPS, complete native capture/upload, background/permission behavior and performance on actual Android/iPhone hardware. The AOSP test image has no Google location services; emulated preview does not prove physical capture quality or GPS authenticity.
+2. Produce and test a signed iOS build using Apple tooling.
+3. Provision phone-reachable HTTPS hosting, production storage/backups, email verification/recovery, moderation operations and OS push delivery before public use. The in-app notification inbox/preferences are functional; OS push is not implemented.
+4. Implement advanced recommendation/planning tools. Contribution accounting is real: three approved distinct place/day updates earn 30 days. The app identifies the advanced tools as unavailable and has no paid subscriptions.
+5. Complete release hardening, final application identifiers/signing, stronger capture attestation and Expo tooling upgrades. The backend audit has no known advisories; the mobile graph has no high/critical advisories but 12 moderate and 1 low tooling advisories remain.
 
-## Run and review
+The required navigation is Home · Search · Record · Friends · Profile, with Saved inside Search. Personal maps open separately from the profile; friend profiles have maps/recent places and no general message action. There are no public likes/comments, Past invitation tab, group chats, livestreaming, camera-roll video uploads or paid Premium controls.
 
-See [mobile instructions](../mobile/README.md), [backend instructions](../server/README.md), [architecture](architecture.md), [API](api.md) and [source audit](source-audit.md).
-
-The cloud's tested Node 22 installation is `/workspace/.outsidefixed3/node-v22.23.5-linux-x64/bin`. The API runs on port 8787. A physical phone must reach the server on your own network; it cannot automatically reach this cloud machine. No paid accounts or services were provisioned.
-
-For repeatable browser validation, start the API and `npx expo start --web --offline --port 8082` in `mobile/`, then run `npm --prefix mobile run test:ui`. The root package supplies Playwright, and `CHROMIUM_PATH` can select a local browser. `node mobile/scripts/session-race.cjs` exercises the session race regression. Validation logs and screenshots are retained under `artifacts/`.
+Source archives exclude runtime databases, media, credentials, development signing keys, node_modules and build products. Build/test logs and native/browser screenshots are retained under `artifacts/`; that directory is ignored by Git.
