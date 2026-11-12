@@ -7,6 +7,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 package-lock.json
+!mobile/package-lock.json
+!server/package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
@@ -14,6 +16,11 @@ pnpm-lock.yaml
 dist
 dist-ssr
 *.local
+
+# Native review artifacts and local backend data
+artifacts/
+server/data/
+server/.env
 
 # editor
 .vscode

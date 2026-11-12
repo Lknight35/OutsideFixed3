@@ -9,7 +9,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:mobile": "npm --prefix mobile start",
+    "dev:server": "npm --prefix server run dev",
+    "test:server": "npm --prefix server test",
+    "check:mobile": "npm --prefix mobile run typecheck",
+    "test:mobile": "npm --prefix mobile test",
+    "build:android": "bash scripts/build-android.sh"
   },
   "dependencies": {
     "lucide-react": "0.468.0",

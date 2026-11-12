@@ -1,0 +1,12 @@
+node_modules/
+dist/
+mobile/node_modules/
+mobile/android/
+mobile/ios/
+mobile/dist/
+mobile/.expo/
+mobile/src/vendor/
+server/node_modules/
+server/data/
+artifacts/
+/src/
