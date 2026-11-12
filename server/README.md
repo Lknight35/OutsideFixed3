@@ -11,6 +11,15 @@ npm start
 
 `GET http://127.0.0.1:8787/healthz` verifies the running service and SQLite connection. On this cloud machine, prepend `/workspace/.outsidefixed3/node-v22.23.5-linux-x64/bin` to PATH. A phone needs a reachable server hostname/IP; its localhost is not this server. HTTP is for a local development network only.
 
+To connect a physical phone to the local development build:
+
+1. Run the commands above on your own computer with Node 22, FFmpeg and FFprobe installed. Keep `npm start` running.
+2. Put the phone and computer on the same Wi-Fi network and allow the phone to reach the computer's port 8787.
+3. In Outside's **Connect server** screen, enter `http://<computer-LAN-IPv4>:8787`, for example `http://192.168.1.20:8787`. Use your computer's actual address.
+4. Create an account, search for a real place and save it. An empty video feed is expected until real recordings are uploaded and approved.
+
+For an Android emulator on the server computer, use `http://10.0.2.2:8787`; an iOS simulator on the server Mac can use `http://127.0.0.1:8787`. The Android internal review build enables local HTTP explicitly; production builds require a reachable HTTPS service. A phone cannot automatically reach this cloud workspace, and this task does not provision an externally hosted backend.
+
 Optional environment variables:
 
 | Variable | Default | Purpose |

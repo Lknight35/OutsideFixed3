@@ -15,7 +15,8 @@
     "test:server": "npm --prefix server test",
     "check:mobile": "npm --prefix mobile run typecheck",
     "test:mobile": "npm --prefix mobile test",
-    "build:android": "bash scripts/build-android.sh"
+    "build:android": "bash scripts/build-android.sh",
+    "build:android:debug": "OUTSIDE_ANDROID_VARIANT=debug bash scripts/build-android.sh"
   },
   "dependencies": {
     "lucide-react": "0.468.0",

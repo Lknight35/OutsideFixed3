@@ -69,7 +69,12 @@ export function ProfileScreen({
         <Text style={styles.muted}>Your places. Your perspective.</Text>
       </View>
       <View style={styles.card}>
-        <View style={[styles.row, { justifyContent: "space-between" }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open personal map"
+          onPress={onMap}
+          style={[styles.row, { justifyContent: "space-between" }]}
+        >
           <View style={styles.row}>
             <View
               style={{
@@ -97,7 +102,7 @@ export function ProfileScreen({
             </View>
           </View>
           <Icon name="chevron-forward" color={colors.muted} />
-        </View>
+        </Pressable>
         <Text style={styles.body}>
           A personal collection of the places you’ve recorded. Keep any location
           and its recordings hidden from other people whenever you choose.

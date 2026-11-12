@@ -56,6 +56,7 @@ export default function MapCanvas({
           source={{ html: mapDocument(points, focus) }}
           style={{ flex: 1, backgroundColor: "#16141D" }}
           javaScriptEnabled
+          applicationNameForUserAgent="Outside/0.1 (+https://github.com/Lknight35/OutsideFixed3)"
           originWhitelist={["*"]}
           setSupportMultipleWindows={false}
           onShouldStartLoadWithRequest={(req) => {

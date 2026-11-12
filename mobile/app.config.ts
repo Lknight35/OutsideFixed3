@@ -60,7 +60,6 @@ const config: ExpoConfig = {
       },
     ],
     "expo-secure-store",
-    "expo-notifications",
     "expo-video",
     "expo-font",
     "expo-asset",

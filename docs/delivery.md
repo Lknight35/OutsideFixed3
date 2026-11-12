@@ -4,18 +4,19 @@ This is a connected local-development implementation, not a store-ready release.
 
 ## Installable build status
 
-**No Android APK or iOS IPA has been produced.** The Android toolchain is installed, its emulator boots, and Gradle reaches native dependency resolution. Maven redirects the React Native and Hermes binaries to `repo.reactnative.dev`; the cloud egress proxy rejects that host with HTTP 403. The requested host is saved in the environment configuration draft. `tile.openstreetmap.org` is also drafted for map imagery.
+**Both Android APKs have been produced and their signatures verified. Installation/launch verification is in progress. No iOS IPA has been produced.** The network rules for `repo.reactnative.dev` and `tile.openstreetmap.org` are now applied. Both the standalone review and debug Gradle builds pass. Android 15 software emulation encountered restarting system services; runtime testing is continuing on Android 11.
 
-Save those changes in environment settings. After they apply, run:
+Reproduce the builds with:
 
 ```sh
 cd /workspace/OutsideFixed3
 npm run build:android
+npm run build:android:debug
 ```
 
-The script verifies the Gradle distribution checksum, generates the native Android project, builds arm64 and x86_64, verifies the APK signature, and places the result at `artifacts/outside-review.apk`. This is a development-signed internal build with explicitly enabled local-network HTTP; it is not a Play Store release. Native compiler/runtime issues beyond the current blocked dependencies remain unverified.
+The script verifies the Gradle distribution checksum, generates the native Android project, builds arm64 and x86_64, verifies the APK signature, and places the results at `artifacts/outside-review.apk` and `artifacts/outside-debug.apk`, each with a SHA-256 file. These are development-signed internal builds with explicitly enabled local-network HTTP, not Play Store releases. The review APK includes JavaScript and needs no Metro server; the debug APK requires Metro on port 8081.
 
-The generated iOS project and its JavaScript bundle validate here. Native iOS compilation, signing and installation require Xcode on macOS or a configured remote build/signing service; neither is available in this local-only task.
+The generated iOS project and its JavaScript bundle validate here. Its unused push entitlement has been removed. Free local iPhone testing can use Xcode on a Mac and a free Apple ID/Personal Team, as described in the mobile instructions. Neither Xcode nor Apple signing is available in this Linux task.
 
 ## Implemented
 
@@ -45,14 +46,14 @@ The reference image's group chat, gallery video uploads, follower/popularity cou
 | Preserved Vite prototype build                                              | Passed                                                                                                                                                                   |
 | Backend dependency audit                                                    | Zero known advisories                                                                                                                                                    |
 | Mobile dependency audit                                                     | Zero high/critical; 12 moderate and 1 low advisories remain in the Expo configuration/build dependency graph                                                             |
-| Android native packaging                                                    | Blocked by the 403 above                                                                                                                                                 |
+| Android native packaging                                                    | Review and debug APKs built; signatures verified; installation/launch testing in progress                                                                                 |
 | Physical camera/GPS, native permission lifecycle and installed-app behavior | Not verified on a device                                                                                                                                                 |
 
 Media tests use isolated databases and explicit test fixtures. They exercise actual decoding, transcoding, moderation, byte-range delivery and authorization revocation; they do not establish the authenticity of real-world footage. Browser smoke accounts are deleted after testing. Existing unrelated local accounts/data are preserved. No runtime database, uploaded media, credentials or development signing keys are included in the source archive.
 
 ## Remaining work
 
-1. Apply the network rule, finish native Android compilation, install the APK and test native camera/GPS, media upload and permission/background behavior. Map tile imagery was blocked here; map marker behavior and failure handling were tested.
+1. Finish APK installation/launch and native camera/GPS, media upload and permission/background testing. Genuine map imagery, marker behavior and attribution are now verified in Chromium using the existing managed CA trust; native map imagery is not yet verified.
 2. Produce and test a signed iOS build on appropriate Apple tooling.
 3. Provision a phone-reachable HTTPS backend, production storage/backups, account email verification/recovery, push-delivery credentials and moderation operations before public use. The current API is a real local service with SQLite and disk media, not an externally deployed service.
 4. Add stronger device attestation/abuse controls for public capture claims. Current checks reject stale, distant, inaccurate and reported-mocked fixes; GPS and client declarations cannot prove authenticity.

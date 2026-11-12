@@ -7,6 +7,12 @@ fi
 : "${ANDROID_HOME:?Set ANDROID_HOME to your Android SDK}"
 : "${JAVA_HOME:?Set JAVA_HOME to JDK 17}"
 cd "$repo_dir/mobile"
+variant="${OUTSIDE_ANDROID_VARIANT:-release}"
+case "$variant" in
+  release) task=assembleRelease; artifact=outside-review.apk; export NODE_ENV=production ;;
+  debug) task=assembleDebug; artifact=outside-debug.apk; export NODE_ENV=development ;;
+  *) printf 'OUTSIDE_ANDROID_VARIANT must be release or debug\n' >&2; exit 2 ;;
+esac
 # Explicitly opt into private-network HTTP only for the internal review build.
 export OUTSIDE_ALLOW_LOCAL_HTTP="${OUTSIDE_ALLOW_LOCAL_HTTP:-1}"
 export CI=1 EXPO_NO_TELEMETRY=1
@@ -21,9 +27,12 @@ checksum="$(cat "$checksum_file")"
 if ! rg -q '^distributionSha256Sum=' "$wrapper"; then
   printf '\ndistributionSha256Sum=%s\n' "$checksum" >> "$wrapper"
 fi
-./android/gradlew -p android :app:assembleRelease -PreactNativeArchitectures="${OUTSIDE_ANDROID_ARCHITECTURES:-arm64-v8a,x86_64}" --max-workers="${OUTSIDE_BUILD_WORKERS:-3}" -Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m'
+./android/gradlew -p android ":app:$task" -PreactNativeArchitectures="${OUTSIDE_ANDROID_ARCHITECTURES:-arm64-v8a,x86_64}" --max-workers="${OUTSIDE_BUILD_WORKERS:-3}" -Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m'
 mkdir -p "$repo_dir/artifacts"
-cp android/app/build/outputs/apk/release/app-release.apk "$repo_dir/artifacts/outside-review.apk"
-"$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$repo_dir/artifacts/outside-review.apk"
-sha256sum "$repo_dir/artifacts/outside-review.apk" > "$repo_dir/artifacts/outside-review.apk.sha256"
-printf 'Internal development-signed review APK: %s/artifacts/outside-review.apk\n' "$repo_dir"
+cp "android/app/build/outputs/apk/$variant/app-$variant.apk" "$repo_dir/artifacts/$artifact"
+"$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$repo_dir/artifacts/$artifact"
+(cd "$repo_dir/artifacts" && sha256sum "$artifact" > "$artifact.sha256")
+printf 'Internal development-signed %s APK: %s/artifacts/%s\n' "$variant" "$repo_dir" "$artifact"
+if [[ "$variant" == debug ]]; then
+  printf 'Debug needs Metro: run npm start in mobile/ and adb reverse tcp:8081 tcp:8081. The review APK bundles JavaScript for phone testing.\n'
+fi
